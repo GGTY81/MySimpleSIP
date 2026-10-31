@@ -1,6 +1,6 @@
 /*
  * MySimpleSIP — Get/WritePrivateProfileString* do Win32 sobre IniFile.
- * Copyright (C) 2026 MySimpleSIP
+ * Copyright (C) 2026 Giovanni Grimaldi Torelly <giovannigrimaldi@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by

@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2011-2026 MicroSIP (http://www.microsip.org)
- * Copyright (C) 2026 MySimpleSIP
+ * Copyright (C) 2026 Giovanni Grimaldi Torelly <giovannigrimaldi@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by

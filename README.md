@@ -8,7 +8,7 @@
 > C++20, Qt 6 and PJSIP. It aims to reproduce MicroSIP's features, layout and behaviour on
 > Ubuntu 26.04. The documentation is in Brazilian Portuguese.*
 
-![Janela principal, chamada recebida e histórico](docs/layout/historico-0.3.1.png)
+<p align="center"><img src="docs/layout/janela-principal-0.5.2.png" alt="Janela principal do MySimpleSIP: discador" width="243"></p>
 
 > **Situação: versão de desenvolvimento (0.5.x).** O aplicativo já é usado em chamadas reais,
 > mas ainda não chegou à versão estável 1.0.0. Até lá não há pacote pronto: a instalação é
@@ -102,6 +102,8 @@ MicroSIP 3.22), `Y` fase concluída, `Z` incrementos e correções. A versão at
 ## Licença e créditos
 
 GPL-2.0-or-later — veja [COPYING](COPYING).
+
+**Autor do MySimpleSIP:** Giovanni Grimaldi Torelly <giovannigrimaldi@gmail.com>.
 
 O MySimpleSIP é uma obra derivada do **MicroSIP**, Copyright (C) 2011-2026 MicroSIP
 (www.microsip.org), distribuído sob a GNU GPL v2 ou posterior; os avisos de copyright

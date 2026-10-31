@@ -1,6 +1,6 @@
 /*
  * MySimpleSIP — CFile/CStdioFileEx (arquivo de texto com página de código) para o código
- * portado do MicroSIP (lib/CSVFile e Service). Copyright (C) 2026 MySimpleSIP. GPL-2.0+.
+ * portado do MicroSIP (lib/CSVFile e Service). Copyright (C) 2026 Giovanni Grimaldi Torelly <giovannigrimaldi@gmail.com>. GPL-2.0+.
  */
 
 // No MicroSIP, CStdioFileEx (David Pritchard, lib/StdioFileEx) estende o CStdioFile do

@@ -1,6 +1,6 @@
 /*
  * MySimpleSIP — senhas das contas no chaveiro do sistema (Secret Service via QtKeychain).
- * Copyright (C) 2026 MySimpleSIP
+ * Copyright (C) 2026 Giovanni Grimaldi Torelly <giovannigrimaldi@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by

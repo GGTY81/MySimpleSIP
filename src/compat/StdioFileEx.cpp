@@ -1,5 +1,5 @@
 /*
- * MySimpleSIP — CStdioFileEx (ver StdioFileEx.h). Copyright (C) 2026 MySimpleSIP. GPL-2.0+.
+ * MySimpleSIP — CStdioFileEx (ver StdioFileEx.h). Copyright (C) 2026 Giovanni Grimaldi Torelly <giovannigrimaldi@gmail.com>. GPL-2.0+.
  */
 
 #include "StdioFileEx.h"

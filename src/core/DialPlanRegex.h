@@ -1,7 +1,7 @@
 /*
  * MySimpleSIP — expressões regulares no dialeto da ATL (CAtlRegExp) para o plano de
  * discagem do MicroSIP.
- * Copyright (C) 2026 MySimpleSIP
+ * Copyright (C) 2026 Giovanni Grimaldi Torelly <giovannigrimaldi@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
