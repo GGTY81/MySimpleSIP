@@ -12,6 +12,7 @@
 | Base de referência | MicroSIP 3.22.16 (fonte em `reference/MicroSIP-3.22.16/`) + sons/langpacks do binário 3.22.12 (`reference/MicroSIP-3.22.12-assets/`), ambos somente leitura. MicroSIP 3.22.12 instalado no Bottles serve de comparação visual/funcional |
 | Pilha decidida | C++20 · CMake/Ninja · Qt 6 Widgets · pjproject 2.15.1 (mesma versão do binário do MicroSIP; tarball em `third_party/`) · SQLite/SQLiteCpp · QtKeychain · hidapi |
 | Alvo | Ubuntu 26.04 LTS, x86_64, GNOME (Wayland, rodando via XWayland por padrão) |
+| Repositório | https://github.com/GGTY81/MySimpleSIP (público, `main`) |
 | Próxima ação | Fase 6, parte 2: `ShortcutsDlg` + atalhos/speed-dial no Discador (com presença dos atalhos), teclas de atalho do menu (aceleradores, ex. Ctrl+P), exportar/importar configuração (`ExportDlg`/`ImportDlg`) e chat SIP (`onPager`/`MessagesIncoming`). Pendente: testes reais do responsável (Configurações, agenda, presença, diretório, transferência, gravação) |
 
 ## Convenções
@@ -305,6 +306,7 @@
 - **Documentação pública:** `README.md` reescrito (recursos, situação, instalação resumida, uso, arquivos, licença/créditos), `docs/INSTALACAO.md` (passo a passo no Ubuntu 26.04: clonar, dependências, compilar, atalho no menu, conta, áudio, atualizar, remover, problemas comuns), `docs/DESENVOLVIMENTO.md` (compilação, sanitizadores, testes opcionais, estrutura, método de port, como recriar `reference/`, como contribuir); `scripts/install-desktop-entry.sh` (atalho no menu do GNOME sem sudo); `install-deps.sh` instala também `git` e `ca-certificates`.
 - **Instalador (decisão de arquitetura, para a 1.0.0):** pacote **`.deb`** gerado pelo CPack (gerador DEB, dependências calculadas com `dpkg-shlibdeps`; pjproject já estático), instalando em `/usr` (`bin/mysimplesip`, `share/mysimplesip/{sounds,langpacks}`, `.desktop`, ícones hicolor, metainfo AppStream, manipulador `sip:`/`tel:`), publicado como asset da Release do GitHub (`sudo apt install ./mysimplesip_X.Y.Z_amd64.deb`); depois, opcionalmente, PPA no Launchpad para atualizações pelo `apt`. Motivo: alvo é o Ubuntu 26.04, o `.deb` integra com o `apt` e as bibliotecas do sistema (Qt 6, PipeWire, chaveiro) e é o formato que o usuário instala com dois cliques; Flatpak/AppImage ficam como opção futura para outras distribuições.
 - **Git local criado** (`main`, 1º commit `MySimpleSIP 0.5.2…`, 431 arquivos, 2,6 MB; identidade local `GGTY81 <GGTY81@users.noreply.github.com>` para não expor o e-mail pessoal num repositório público). **Envio pendente:** o push devolveu 403 — o token *fine-grained* autentica, mas não tem permissão de escrita no repositório (falta "Contents: Read and write" para o MySimpleSIP). O responsável precisa ajustar o token; o remoto `origin` já está configurado (sem token na URL).
+- **Responsável ajustou o token; código publicado** em https://github.com/GGTY81/MySimpleSIP (`main` acompanhando `origin/main`). Conferido pela API: commits atribuídos a GGTY81, raiz só com os arquivos esperados, `.credentials` e `reference/` ausentes (404), `.git/config` sem token. Envio feito com `GIT_ASKPASS` temporário que lê o `.credentials` na hora.
 
 ---
 
