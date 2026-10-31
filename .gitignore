@@ -1,0 +1,49 @@
+# Build
+/build/
+/build-*/
+/out/
+CMakeUserPresets.json
+CMakeLists.txt.user*
+compile_commands.json
+.cache/
+
+# Artefatos de compilação
+*.o
+*.a
+*.so
+*.so.*
+*.obj
+*.lib
+*.exe
+
+# Pacotes gerados
+*.deb
+*.AppImage
+*.flatpak
+/packaging/**/build/
+
+# Arquivo original compactado e o código de referência extraído (só na máquina de
+# desenvolvimento: o original do MicroSIP inclui arquivos que não podem ser
+# redistribuídos, como lib/Markup.* e atlrx.h — ver docs/DESENVOLVIMENTO.md)
+*.7z
+/reference/
+
+# Credenciais locais (token de acesso ao GitHub) — NUNCA versionar
+.credentials
+*.token
+
+# Editores / sistema
+.vscode/
+.idea/
+*.swp
+*~
+.DS_Store
+
+# Dados locais de execução/teste
+*.log
+/tests/sip-lab/data/
+
+# pjproject baixado/compilado por scripts/build-pjproject.sh
+/third_party/downloads/
+/third_party/pjproject/pjproject-*/
+/third_party/pjproject/install/

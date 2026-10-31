@@ -1,0 +1,6 @@
+#pragma once
+
+#define MYSIMPLESIP_NAME         "MySimpleSIP"
+#define MYSIMPLESIP_VERSION      "@PROJECT_VERSION@"
+#define MSIP_BASE_VERSION        "@MSIP_BASE_VERSION@"
+#define PJPROJECT_BUILD_VERSION  "@PJPROJECT_VERSION@"

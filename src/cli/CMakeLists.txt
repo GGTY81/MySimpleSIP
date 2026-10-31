@@ -1,0 +1,5 @@
+# CLI de teste do núcleo SIP (Fase 2)
+add_executable(msip-cli msip_cli.cpp)
+target_include_directories(msip-cli PRIVATE "${PROJECT_BINARY_DIR}/src")
+target_link_libraries(msip-cli PRIVATE msip_core msip_appqt)
+target_compile_options(msip-cli PRIVATE -Wall -Wextra -Wno-reorder)

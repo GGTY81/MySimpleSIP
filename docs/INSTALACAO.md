@@ -1,0 +1,153 @@
+# Instalação no Ubuntu 26.04 LTS
+
+Este guia instala o MySimpleSIP a partir do código-fonte, no Ubuntu 26.04 LTS (64 bits,
+desktop GNOME). Leva uns 10 minutos, quase todos de compilação automática.
+
+> Quando a versão estável 1.0.0 for publicada, haverá um pacote `.deb` na página de
+> [Releases](https://github.com/GGTY81/MySimpleSIP/releases), e a instalação será um único
+> comando (`sudo apt install ./mysimplesip_1.0.0_amd64.deb`). Enquanto isso, siga os passos
+> abaixo.
+
+## O que você precisa
+
+- Ubuntu 26.04 LTS, 64 bits (x86_64), com acesso à internet.
+- Uns 2 GB livres em disco (código, dependências e compilação).
+- Uma conta SIP (do seu PBX ou provedor de telefonia IP) para fazer chamadas.
+- Microfone e alto-falantes ou um fone (com fio, USB ou Bluetooth).
+
+## 1. Baixar o código
+
+Abra o **Terminal** (Ctrl+Alt+T) e execute:
+
+```bash
+sudo apt install git
+git clone https://github.com/GGTY81/MySimpleSIP.git
+cd MySimpleSIP
+```
+
+Isso cria a pasta `MySimpleSIP` na sua pasta pessoal (ou onde o Terminal estiver). Todos os
+comandos seguintes são executados dentro dela.
+
+## 2. Instalar as dependências
+
+```bash
+sudo ./scripts/install-deps.sh
+```
+
+O script instala, pelo `apt`, o compilador, o CMake, o Qt 6 e as bibliotecas de áudio,
+vídeo, criptografia e banco de dados usadas pelo MySimpleSIP (a lista completa está no
+próprio script). Só é preciso fazer isso uma vez.
+
+## 3. Compilar
+
+```bash
+./build.sh
+```
+
+Na primeira vez, o script baixa e compila o PJSIP (pjproject 2.15.1, com verificação
+SHA-256 do arquivo baixado) e depois compila o MySimpleSIP. Ao final aparece:
+
+```
+Executável: /.../MySimpleSIP/build/src/mysimplesip
+```
+
+Para conferir:
+
+```bash
+./build/src/mysimplesip --version
+```
+
+## 4. Abrir o aplicativo
+
+```bash
+./build/src/mysimplesip
+```
+
+Para que o MySimpleSIP apareça no menu de aplicativos do GNOME (e possa ser fixado no
+dock), crie o atalho — não precisa de `sudo`, nada é copiado para o sistema:
+
+```bash
+./scripts/install-desktop-entry.sh
+```
+
+Para iniciar junto com o sistema, marque **Executar na inicialização do sistema** em
+menu → **Configurações** (cria `~/.config/autostart/mysimplesip.desktop`).
+
+### Ícone na bandeja
+
+O MySimpleSIP fica na bandeja do sistema (ao lado do relógio). No Ubuntu isso funciona com
+a extensão **AppIndicator**, que já vem ativa. Fechar a janela só a esconde; para reabrir,
+clique no ícone da bandeja e escolha **MySimpleSIP**. Para sair de verdade: menu → **Sair**.
+
+## 5. Configurar a conta SIP
+
+Na primeira execução o diálogo **Conta** abre automaticamente (depois: menu → **Editar
+Conta**). Preencha os dados fornecidos pelo seu PBX ou provedor:
+
+| Campo | Exemplo |
+|---|---|
+| Servidor SIP | `pbx.suaempresa.com.br` |
+| Usuário | `1001` |
+| Domínio | `pbx.suaempresa.com.br` |
+| Login (opcional) | o mesmo do usuário, se o provedor não pedir outro |
+| Senha | a senha do ramal |
+
+A senha é guardada no **chaveiro do GNOME** (Senhas e chaves), e não no arquivo de
+configuração. Quando a conta registra, a barra de status mostra **Online**.
+
+## 6. Áudio
+
+Em menu → **Configurações**, os campos **Ouvir chamada em**, **Ouvir toque em** e
+**Microfone** listam os dispositivos com os nomes do sistema. **Padrão** segue o
+dispositivo padrão escolhido em *Configurações do Ubuntu → Som* — inclusive quando um fone
+Bluetooth conecta. Recomenda-se deixar **Padrão**.
+
+## Atualizar
+
+```bash
+cd MySimpleSIP
+git pull
+./build.sh
+```
+
+Se uma atualização trouxer dependências novas, rode também `sudo ./scripts/install-deps.sh`.
+Configurações, contatos e histórico ficam na sua pasta pessoal e são mantidos.
+
+## Remover
+
+```bash
+cd MySimpleSIP
+./scripts/install-desktop-entry.sh --remove   # remove o atalho do menu
+cd .. && rm -rf MySimpleSIP                   # remove o código e a compilação
+```
+
+Seus dados continuam em `~/.config/MySimpleSIP`, `~/.local/share/MySimpleSIP` e
+`~/.local/state/MySimpleSIP`; apague essas pastas se quiser removê-los também. A senha fica
+no chaveiro do GNOME (aplicativo *Senhas e chaves*, item "MySimpleSIP").
+
+## Problemas comuns
+
+**A barra de status mostra erro de registro.**
+Confira servidor, usuário, domínio e senha. Se o PBX usar outra porta ou transporte (TCP,
+TLS), ajuste no diálogo Conta. Para diagnóstico, habilite **Habilitar arquivo de log** nas
+Configurações e veja `~/.local/state/MySimpleSIP/MySimpleSIP_log.txt`.
+
+**Não há áudio ou ele sai no dispositivo errado.**
+Deixe os três dispositivos em **Padrão** nas Configurações e escolha o dispositivo em
+*Configurações do Ubuntu → Som*. O MySimpleSIP usa o PipeWire (servidor de som padrão do
+Ubuntu).
+
+**Mensagens no terminal como `jack server is not running` ou `Failed to register with host portal`.**
+São avisos de bibliotecas do sistema e podem ser ignorados.
+
+**A janela não aparece no lugar onde foi deixada.**
+No Wayland (padrão do Ubuntu) quem decide a posição das janelas é o GNOME. Para usar a
+posição salva, rode pelo XWayland: `QT_QPA_PLATFORM=xcb ./build/src/mysimplesip`.
+
+**O ícone da bandeja não aparece.**
+Verifique se a extensão *Ubuntu AppIndicators* está ativa (aplicativo *Extensões*).
+
+**Erro ao compilar.**
+Rode de novo `sudo ./scripts/install-deps.sh` (pode faltar alguma dependência nova) e
+depois `rm -rf build && ./build.sh`. Se persistir, abra uma *issue* no GitHub com a saída
+do erro.

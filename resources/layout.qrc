@@ -1,0 +1,7 @@
+<!DOCTYPE RCC>
+<!-- Layout dos diálogos do MicroSIP extraído por scripts/extract-dialogs.py -->
+<RCC version="1.0">
+    <qresource prefix="/">
+        <file alias="layout/dialogs.json">../docs/layout/dialogs.json</file>
+    </qresource>
+</RCC>

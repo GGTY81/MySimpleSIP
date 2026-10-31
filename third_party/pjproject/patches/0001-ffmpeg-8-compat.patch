@@ -1,0 +1,71 @@
+--- a/pjmedia/src/pjmedia-codec/ffmpeg_vid_codecs.c
++++ b/pjmedia/src/pjmedia-codec/ffmpeg_vid_codecs.c
+@@ -42,6 +42,26 @@
+ 
+ #include "../pjmedia/ffmpeg_util.h"
+ #include <libavcodec/avcodec.h>
++
++/* MySimpleSIP: compatibilidade com FFmpeg >= 7 (libavcodec 61+), onde
++ * avcodec_close() e AVFrame.key_frame foram removidos. */
++static void ff_close_free_ctx(AVCodecContext *ctx, pj_bool_t opened)
++{
++#if LIBAVCODEC_VERSION_MAJOR >= 61
++    PJ_UNUSED_ARG(opened);
++    avcodec_free_context(&ctx);
++#else
++    if (opened)
++        avcodec_close(ctx);
++    av_free(ctx);
++#endif
++}
++
++#if LIBAVCODEC_VERSION_MAJOR >= 61
++#   define FF_FRAME_IS_KEY(f)   (((f).flags & AV_FRAME_FLAG_KEY) != 0)
++#else
++#   define FF_FRAME_IS_KEY(f)   ((f).key_frame)
++#endif
+ #include <libavformat/avformat.h>
+ #if LIBAVCODEC_VER_AT_LEAST(53,20)
+   /* Needed by 264 so far, on libavcodec 53.20 */
+@@ -1396,15 +1416,11 @@
+ 
+ on_error:
+     if (ff->enc_ctx) {
+-        if (enc_opened)
+-            avcodec_close(ff->enc_ctx);
+-        av_free(ff->enc_ctx);
++        ff_close_free_ctx(ff->enc_ctx, enc_opened);
+         ff->enc_ctx = NULL;
+     }
+     if (ff->dec_ctx) {
+-        if (dec_opened)
+-            avcodec_close(ff->dec_ctx);
+-        av_free(ff->dec_ctx);
++        ff_close_free_ctx(ff->dec_ctx, dec_opened);
+         ff->dec_ctx = NULL;
+     }
+     return status;
+@@ -1499,12 +1515,10 @@
+ 
+     pj_mutex_lock(ff_mutex);
+     if (ff->enc_ctx) {
+-        avcodec_close(ff->enc_ctx);
+-        av_free(ff->enc_ctx);
++        ff_close_free_ctx(ff->enc_ctx, PJ_TRUE);
+     }
+     if (ff->dec_ctx && ff->dec_ctx!=ff->enc_ctx) {
+-        avcodec_close(ff->dec_ctx);
+-        av_free(ff->dec_ctx);
++        ff_close_free_ctx(ff->dec_ctx, PJ_TRUE);
+     }
+     ff->enc_ctx = NULL;
+     ff->dec_ctx = NULL;
+@@ -1968,7 +1982,7 @@
+          * keyframe found/missing.
+          */
+         status = check_decode_result(codec, &input->timestamp,
+-                                     avframe.key_frame);
++                                     FF_FRAME_IS_KEY(avframe));
+         if (status != PJ_SUCCESS) {
+             ffmpeg_frame_unref(&avframe);
+             return status;
