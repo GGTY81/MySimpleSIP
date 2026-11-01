@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright (C) 2026 Giovanni Grimaldi Torelly <giovannigrimaldi@gmail.com> -->
+<component type="desktop-application">
+  <id>io.github.ggty81.MySimpleSIP</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-2.0-or-later</project_license>
+  <name>MySimpleSIP</name>
+  <summary>SIP softphone based on MicroSIP</summary>
+  <summary xml:lang="pt-BR">Softphone SIP baseado no MicroSIP</summary>
+  <description>
+    <p>
+      MySimpleSIP is a native Linux port of the MicroSIP softphone, with the same features,
+      layout and configuration format: SIP accounts, audio and video calls, transfer,
+      conference, call recording, contacts, call history, presence (BLF) and SIP messages.
+    </p>
+    <p xml:lang="pt-BR">
+      O MySimpleSIP é um port nativo para Linux do softphone MicroSIP, com os mesmos recursos,
+      layout e formato de configuração: contas SIP, chamadas de áudio e vídeo, transferência,
+      conferência, gravação de chamadas, contatos, histórico, presença (BLF) e mensagens SIP.
+    </p>
+  </description>
+  <launchable type="desktop-id">mysimplesip.desktop</launchable>
+  <icon type="stock">mysimplesip</icon>
+  <url type="homepage">https://github.com/GGTY81/MySimpleSIP</url>
+  <url type="bugtracker">https://github.com/GGTY81/MySimpleSIP/issues</url>
+  <developer id="io.github.ggty81">
+    <name>Giovanni Grimaldi Torelly</name>
+  </developer>
+  <categories>
+    <category>Network</category>
+    <category>Telephony</category>
+  </categories>
+  <keywords>
+    <keyword>SIP</keyword>
+    <keyword>VoIP</keyword>
+    <keyword>softphone</keyword>
+  </keywords>
+  <content_rating type="oars-1.1"/>
+  <releases>
+    <release version="@PROJECT_VERSION@" date="@MSIP_RELEASE_DATE@"/>
+  </releases>
+</component>

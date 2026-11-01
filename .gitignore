@@ -17,6 +17,7 @@ compile_commands.json
 *.exe
 
 # Pacotes gerados
+/dist/
 *.deb
 *.AppImage
 *.flatpak

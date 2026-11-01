@@ -23,6 +23,9 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 endif()
 
 include(GNUInstallDirs)
+# pastas instaladas com 0755 independentemente do umask (pacote .deb)
+set(CMAKE_INSTALL_DEFAULT_DIRECTORY_PERMISSIONS
+    OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 find_package(Qt6 6.4 REQUIRED COMPONENTS Core Gui Widgets Network DBus)
@@ -32,6 +35,7 @@ qt_standard_project_setup()
 set(CMAKE_AUTORCC ON)   # .qrc listados nos fontes (qt_standard_project_setup só liga MOC/UIC)
 
 add_subdirectory(src)
+include(Packaging)
 
 include(CTest)
 if(BUILD_TESTING)

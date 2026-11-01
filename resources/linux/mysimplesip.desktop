@@ -1,0 +1,15 @@
+[Desktop Entry]
+Type=Application
+Name=MySimpleSIP
+GenericName=SIP Softphone
+GenericName[pt_BR]=Softphone SIP
+Comment=SIP softphone for Linux based on MicroSIP
+Comment[pt_BR]=Softphone SIP para Linux baseado no MicroSIP
+Exec=mysimplesip %u
+Icon=mysimplesip
+Terminal=false
+Categories=Network;Telephony;
+MimeType=x-scheme-handler/sip;x-scheme-handler/tel;x-scheme-handler/callto;
+Keywords=SIP;VoIP;phone;softphone;
+Keywords[pt_BR]=SIP;VoIP;telefone;softphone;
+StartupWMClass=mysimplesip

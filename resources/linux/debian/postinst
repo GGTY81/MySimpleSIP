@@ -1,0 +1,8 @@
+#!/bin/sh
+# MySimpleSIP: aplica a regra do udev dos fones USB HID aos dispositivos já conectados
+set -e
+if [ "$1" = "configure" ] && command -v udevadm >/dev/null 2>&1; then
+    udevadm control --reload || true
+    udevadm trigger --subsystem-match=hidraw --action=change || true
+fi
+exit 0

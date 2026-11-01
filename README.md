@@ -10,10 +10,11 @@
 
 <p align="center"><img src="docs/layout/janela-principal-0.5.2.png" alt="Janela principal do MySimpleSIP: discador" width="243"></p>
 
-> **Situação: versão de desenvolvimento (0.8.x).** O aplicativo já é usado em chamadas reais,
-> mas ainda não chegou à versão estável 1.0.0. Até lá não há pacote pronto: a instalação é
-> pela compilação do código-fonte (≈ 10 minutos, passo a passo abaixo). Na 1.0.0 será
-> publicado um pacote `.deb` na página de [Releases](https://github.com/GGTY81/MySimpleSIP/releases).
+> **Situação: versão de desenvolvimento (0.9.x).** O aplicativo já é usado em chamadas reais,
+> mas ainda não chegou à versão estável 1.0.0. Até lá não há pacote pronto para baixar: a
+> instalação é pela compilação do código-fonte (≈ 10 minutos, passo a passo abaixo), que
+> também pode gerar o pacote `.deb` na sua máquina. Na 1.0.0 o `.deb` será publicado na
+> página de [Releases](https://github.com/GGTY81/MySimpleSIP/releases).
 
 ## Recursos
 
@@ -52,8 +53,7 @@
 
 **Em andamento** (veja o [plano](docs/ANALISE_E_PLANO.md))
 
-- Polimento e pacote `.deb` — Fase 9; comparação lado a lado com o MicroSIP e Release
-  1.0.0 — Fase 10.
+- Comparação lado a lado com o MicroSIP e Release 1.0.0 com o pacote `.deb` — Fase 10.
 
 ## Instalação no Ubuntu 26.04
 
@@ -68,6 +68,14 @@ sudo ./scripts/install-deps.sh          # dependências (uma vez)
 ./build.sh                              # compila o pjproject e o aplicativo
 ./scripts/install-desktop-entry.sh      # atalho no menu de aplicativos (opcional)
 ./build/src/mysimplesip                 # abre o MySimpleSIP
+```
+
+Ou, em vez do atalho, gere e instale o pacote `.deb` (menu de aplicativos, links `sip:`,
+fone USB HID e remoção pelo `apt`):
+
+```bash
+./scripts/build-deb.sh
+sudo apt install ./dist/mysimplesip_*_amd64.deb
 ```
 
 Para atualizar depois: `git pull && ./build.sh`.
@@ -118,6 +126,6 @@ GPL-2.0-or-later — veja [COPYING](COPYING).
 O MySimpleSIP é uma obra derivada do **MicroSIP**, Copyright (C) 2011-2026 MicroSIP
 (www.microsip.org), distribuído sob a GNU GPL v2 ou posterior; os avisos de copyright
 originais são mantidos nos arquivos portados. "MicroSIP" é o nome do projeto original; o
-MySimpleSIP não é afiliado a ele. Sons, langpacks e ícones vêm do MicroSIP (o ícone é
-provisório). Usa PJSIP (GPL-2.0), Qt 6 (LGPL-3.0), QtKeychain, SQLiteCpp, jsoncpp,
+MySimpleSIP não é afiliado a ele. Sons, langpacks e os ícones da interface vêm do MicroSIP;
+o ícone do aplicativo e os da bandeja são próprios (`resources/brand/`). Usa PJSIP (GPL-2.0), Qt 6 (LGPL-3.0), QtKeychain, SQLiteCpp, jsoncpp,
 libmp3lame, libpulse e hidapi.

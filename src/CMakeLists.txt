@@ -15,6 +15,7 @@ qt_add_executable(mysimplesip
     main.cpp
     "${PROJECT_SOURCE_DIR}/resources/resources.qrc"
     "${PROJECT_SOURCE_DIR}/resources/layout.qrc"
+    "${PROJECT_SOURCE_DIR}/resources/brand.qrc"
 )
 
 target_include_directories(mysimplesip PRIVATE
@@ -36,8 +37,8 @@ add_custom_command(TARGET mysimplesip POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory "${PROJECT_SOURCE_DIR}/resources/sounds" "$<TARGET_FILE_DIR:mysimplesip>"
     VERBATIM)
 
-install(TARGETS mysimplesip RUNTIME DESTINATION bin)
+install(TARGETS mysimplesip RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}")
 # Sons e langpacks são lidos do disco (pjsua_player_create precisa de arquivo)
 install(DIRECTORY "${PROJECT_SOURCE_DIR}/resources/sounds"
                   "${PROJECT_SOURCE_DIR}/resources/langpacks"
-        DESTINATION share/mysimplesip)
+        DESTINATION "${CMAKE_INSTALL_DATADIR}/mysimplesip")

@@ -80,6 +80,24 @@ e-mail) abram direto no MySimpleSIP, como faz o instalador do MicroSIP no Window
 Para iniciar junto com o sistema, marque **Executar na inicialização do sistema** em
 menu → **Configurações** (cria `~/.config/autostart/mysimplesip.desktop`).
 
+### Ou: instalar como pacote `.deb`
+
+Em vez de rodar de dentro da pasta, você pode gerar o pacote e instalá-lo no sistema. Ele
+coloca o MySimpleSIP no menu de aplicativos, registra os links `sip:`/`tel:`/`callto:`, já
+traz a regra do udev do fone USB HID e pode ser removido pelo `apt`:
+
+```bash
+./scripts/build-deb.sh                              # gera dist/mysimplesip_<versão>_amd64.deb
+sudo apt install ./dist/mysimplesip_*_amd64.deb     # instala (o apt resolve as dependências)
+```
+
+Depois disso, abra pelo menu de aplicativos ou com `mysimplesip` no terminal. Para atualizar,
+repita os dois comandos depois de `git pull`. Para remover: `sudo apt remove mysimplesip`.
+Configurações, contatos e histórico ficam na sua pasta pessoal nos dois modos, então dá para
+passar de um para o outro sem perder nada. Se usar o pacote, não precisa do
+`install-desktop-entry.sh` nem do `install-hid-rules.sh` (se já tiver usado, remova com
+`--remove` para não ficar com dois atalhos).
+
 ### Ícone na bandeja
 
 O MySimpleSIP fica na bandeja do sistema (ao lado do relógio). No Ubuntu isso funciona com

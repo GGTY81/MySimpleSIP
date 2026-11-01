@@ -148,6 +148,7 @@ void CmainDlg::OnInitDialog()
     iconInactive = LoadImageIcon(IDI_INACTIVE);
     iconMissed = LoadImageIcon(IDI_MISSED);
     setWindowIcon(iconSmall);
+    QApplication::setWindowIcon(iconSmall); // MySimpleSIP: demais janelas (ex.: vídeo)
     if (langPack.rtl)
         setLayoutDirection(Qt::RightToLeft);
 
@@ -2893,7 +2894,7 @@ LRESULT CmainDlg::onPlayerPlay(WPARAM wParam, LPARAM lParam)
         // MySimpleSIP: sons ao lado do executável (build/portátil) ou em share/mysimplesip/sounds
         CString path = accountSettings.pathExe + _T("/") + filename;
         if (!QFileInfo::exists(QS(path))) {
-            path = CString(_T("/usr/share/mysimplesip/sounds/")) + filename;
+            path = CS(QStringLiteral(MSIP_DATA_DIR "/sounds/")) + filename;
         }
         filename = path;
     }

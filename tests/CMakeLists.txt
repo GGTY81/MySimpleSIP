@@ -73,8 +73,10 @@ qt_add_executable(test_ui
     ui/test_system_monitors.cpp
     ui/test_headset.cpp
     ui/test_video.cpp
+    ui/test_brand.cpp
     "${PROJECT_SOURCE_DIR}/resources/resources.qrc"
     "${PROJECT_SOURCE_DIR}/resources/layout.qrc"
+    "${PROJECT_SOURCE_DIR}/resources/brand.qrc"
 )
 target_include_directories(test_ui PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
 find_package(Qt6 REQUIRED COMPONENTS Test)

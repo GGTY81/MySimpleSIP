@@ -89,8 +89,29 @@ QIcon LoadNamedIcon(const QString& name)
     return icon;
 }
 
+// MySimpleSIP: identidade própria — o ícone do aplicativo e os da bandeja (sem registro,
+// chamada perdida) vêm de resources/brand/ no lugar do logotipo do MicroSIP
+static QIcon LoadBrandIcon(const QString& name)
+{
+    static QHash<QString, QIcon> cache;
+    auto it = cache.find(name);
+    if (it != cache.end())
+        return *it;
+    QIcon icon;
+    for (int size : {16, 24, 32, 48, 64, 128, 256})
+        icon.addFile(QStringLiteral(":/brand/png/%1/%2.png").arg(size).arg(name), QSize(size, size));
+    cache.insert(name, icon);
+    return icon;
+}
+
 QIcon LoadImageIcon(int id)
 {
+    if (id == IDI_MAINFRAME)
+        return LoadBrandIcon(QStringLiteral("mysimplesip"));
+    if (id == IDI_INACTIVE)
+        return LoadBrandIcon(QStringLiteral("tray_inactive"));
+    if (id == IDI_MISSED)
+        return LoadBrandIcon(QStringLiteral("tray_missed"));
     for (const IconEntry& e : kIcons)
         if (e.id == id)
             return LoadNamedIcon(QString::fromLatin1(e.name));

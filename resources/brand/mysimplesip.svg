@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- MySimpleSIP — ícone do aplicativo. Copyright (C) 2026 Giovanni Grimaldi Torelly. GPL-2.0-or-later. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2b8ff0"/>
+      <stop offset="1" stop-color="#1259b8"/>
+    </linearGradient>
+  </defs>
+  <rect x="8" y="8" width="240" height="240" rx="52" fill="url(#bg)"/>
+  <!-- ondas de som -->
+  <path d="M150 62 a 48 48 0 0 1 44 44" fill="none" stroke="#ffffff" stroke-width="16" stroke-linecap="round" opacity="0.85"/>
+  <path d="M150 28 a 82 82 0 0 1 78 78" fill="none" stroke="#ffffff" stroke-width="16" stroke-linecap="round" opacity="0.55"/>
+  <!-- fone: corpo curvo com bocal e auricular -->
+  <path d="M84 76 C 66 120 104 178 158 196" fill="none" stroke="#ffffff" stroke-width="30" stroke-linecap="round"/>
+  <rect x="50" y="52" width="58" height="40" rx="18" fill="#ffffff" transform="rotate(62 79 72)"/>
+  <rect x="146" y="168" width="58" height="40" rx="18" fill="#ffffff" transform="rotate(-28 175 188)"/>
+</svg>

@@ -1,0 +1,27 @@
+<!DOCTYPE RCC>
+<!-- Ícone próprio do MySimpleSIP (PNGs gerados por scripts/render-brand-icons.sh a partir dos SVGs) -->
+<RCC version="1.0">
+    <qresource prefix="/">
+        <file>brand/png/16/mysimplesip.png</file>
+        <file>brand/png/24/mysimplesip.png</file>
+        <file>brand/png/32/mysimplesip.png</file>
+        <file>brand/png/48/mysimplesip.png</file>
+        <file>brand/png/64/mysimplesip.png</file>
+        <file>brand/png/128/mysimplesip.png</file>
+        <file>brand/png/256/mysimplesip.png</file>
+        <file>brand/png/16/tray_inactive.png</file>
+        <file>brand/png/24/tray_inactive.png</file>
+        <file>brand/png/32/tray_inactive.png</file>
+        <file>brand/png/48/tray_inactive.png</file>
+        <file>brand/png/64/tray_inactive.png</file>
+        <file>brand/png/128/tray_inactive.png</file>
+        <file>brand/png/256/tray_inactive.png</file>
+        <file>brand/png/16/tray_missed.png</file>
+        <file>brand/png/24/tray_missed.png</file>
+        <file>brand/png/32/tray_missed.png</file>
+        <file>brand/png/48/tray_missed.png</file>
+        <file>brand/png/64/tray_missed.png</file>
+        <file>brand/png/128/tray_missed.png</file>
+        <file>brand/png/256/tray_missed.png</file>
+    </qresource>
+</RCC>

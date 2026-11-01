@@ -29,6 +29,21 @@ cmake --build build-asan
 ASAN_OPTIONS=detect_leaks=0 ctest --test-dir build-asan   # vazamentos herdados do original
 ```
 
+Pacote `.deb` (CPack; Release em `build-deb/`, prefixo `/usr`, sem testes; dependências
+calculadas pelo `dpkg-shlibdeps`; instala executável, verificador do fone HID em
+`/usr/libexec/mysimplesip`, sons e langpacks, `.desktop`, ícones hicolor, metainfo do
+AppStream e a regra do udev, aplicada pelo `postinst`):
+
+```bash
+./scripts/build-deb.sh            # → dist/mysimplesip_<versão>_amd64.deb
+dpkg-deb -c dist/mysimplesip_*_amd64.deb
+appstreamcli validate --no-net build-deb/io.github.ggty81.MySimpleSIP.metainfo.xml
+```
+
+A configuração do pacote fica em `cmake/Packaging.cmake` e os arquivos de integração em
+`resources/linux/`. O ícone próprio está em `resources/brand/` (SVGs; os PNGs são gerados
+por `scripts/render-brand-icons.sh`, que usa o plugin de SVG do Qt).
+
 ## Testes
 
 ```bash

@@ -7,13 +7,13 @@
 
 | Campo | Valor |
 |---|---|
-| Versão vigente | **0.8.0** (ver arquivo `VERSION`) |
-| Fase | 9 — Polimento e empacotamento (→ 0.9.0), a iniciar. Fases 0 a 8 concluídas |
+| Versão vigente | **0.9.0** (ver arquivo `VERSION`) |
+| Fase | 10 — Paridade (→ 1.0.0), a iniciar. Fases 0 a 9 concluídas |
 | Base de referência | MicroSIP 3.22.16 (fonte em `reference/MicroSIP-3.22.16/`) + sons/langpacks do binário 3.22.12 (`reference/MicroSIP-3.22.12-assets/`), ambos somente leitura. MicroSIP 3.22.12 instalado no Bottles serve de comparação visual/funcional |
 | Pilha decidida | C++20 · CMake/Ninja · Qt 6 Widgets · pjproject 2.15.1 (mesma versão do binário do MicroSIP; tarball em `third_party/`) · SQLite/SQLiteCpp · QtKeychain · hidapi |
 | Alvo | Ubuntu 26.04 LTS, x86_64, GNOME (Wayland, rodando via XWayland por padrão) |
 | Repositório | https://github.com/GGTY81/MySimpleSIP (público, `main`) |
-| Próxima ação | Fase 9: polimento e empacotamento (ícone e sons próprios, `.deb` com CPack incluindo udev/.desktop/metainfo). Pendente: testes reais do responsável (videochamada com a câmera e um softphone/PBX, fone USB HID com a regra do udev, teclas de mídia/fone Bluetooth em chamada, tema escuro, suspensão e troca de rede, atalhos com BLF, exportar/importar, chat com o PBX); decisão sobre `IDT_TIMER_VERSION` (servidor de atualizações) |
+| Próxima ação | Fase 10: comparação lado a lado com o MicroSIP (Bottles) e checklist de paridade (ANALISE §3.4); Release 1.0.0 com o `.deb`. Pendente: instalar o `.deb` num Ubuntu 26.04 limpo (o contêiner não roda no ambiente de desenvolvimento); testes reais do responsável (videochamada com a câmera e um softphone/PBX, fone USB HID com a regra do udev, teclas de mídia/fone Bluetooth em chamada, tema escuro, suspensão e troca de rede, atalhos com BLF, exportar/importar, chat com o PBX); decisão sobre `IDT_TIMER_VERSION` (servidor de atualizações) |
 
 ## Convenções
 
@@ -45,6 +45,7 @@
 | 0.2.1 | 2026-10-30 | Fase 3, parte 1: senhas no chaveiro do sistema (`KeychainPasswordStore`, QtKeychain/Secret Service); janela principal Qt `CmainDlg` (deriva de `CmainDlgCore`): abas, botão de menu, barra de status com ícone, `UpdateWindowText`, bandeja, menu principal, posição/tamanho salvos; `main.cpp` passa a abrir a janela real. |
 | 0.2.2 | 2026-10-30 | Fase 3, parte 2: `CDialogLayout` (monta qualquer `IDD_*` a partir de `dialogs.json`, controles acessados pelo ID do `.rc`); `AccountDlg` portado (nova/editar/excluir conta, conta local, senha no chaveiro); teste de interface offscreen `test_ui`. |
 | 0.2.3 | 2026-10-30 | Fase 3, parte 3: `Dialer` (aba Telefone) portado — teclado, número com histórico, Chamar/Encerrar, volumes/mudo, VU-meter, DTMF, DND/AA/FWD/AC/CONF/REC; controles `CButtonDialer/CButtonEx/CLevelsSliderCtrl`; `CDialogLayout` com controles próprios e `AutoMove/AutoUnmove`; chamadas pela janela com provisórios (`MakeCall/PerformCall`, toque e caixa Atender/Rejeitar). |
+| **0.9.0** | 2026-11-01 | **Fim da Fase 9 (Polimento e empacotamento).** Pacote `.deb` pelo CPack (`scripts/build-deb.sh`, `cmake/Packaging.cmake`: executável, verificador do fone HID em `/usr/libexec`, sons e langpacks, `.desktop`, ícones hicolor, metainfo do AppStream validado, regra do udev aplicada pelo `postinst`; dependências pelo `dpkg-shlibdeps`, todas no main/universe do 26.04); ícone próprio do aplicativo e da bandeja (`resources/brand/`, no lugar do logotipo do MicroSIP); caminho dos sons pelo prefixo de instalação; 112 testes. |
 | **0.8.0** | 2026-11-01 | **Fim da Fase 8 (Vídeo).** Renderizador de vídeo próprio do pjmedia com janelas Qt (`VideoWindow`, no lugar do SDL, que no Wayland não pode ser encaixado em outra janela): vídeo remoto em janela própria redimensionável, quadros em BGRA convertidos pelo pjmedia; `Preview` portado (prévia "Vídeo local" com a janela do renderizador encaixada, como o `SetParent` do original), botão Visualizar das Configurações e fechamento da prévia ao fim da última chamada; captura V4L2 e codecs H.264/H.263/VP8/VP9 do pjproject; CLI de teste com vídeo (`--video`, `videocall`, `video`) e correção do `quit` antes do laço de eventos; 111 testes. |
 | **0.7.0** | 2026-11-01 | **Fim da Fase 7 (Integração Linux).** Fone USB HID (`lib/Hid.cpp` portado sobre hidapi/hidraw, com `HidParser` no lugar do `hid.dll`: gancho atende/desliga, mudo, rediscagem, LEDs de toque/fora do gancho/mudo; regra do udev que libera só dispositivos com coleção de telefonia, `scripts/install-hid-rules.sh`); teclas de mídia por um player MPRIS que "toca" durante as chamadas (`onShellHookMessage` portado); tema escuro (paleta do sistema, cores fixas do chat/teclado e glifo do menu ajustados); pjproject sem o ALSA na lista automática (fim das mensagens do JACK; ALSA só sem servidor de som); 109 testes. |
 | 0.6.2 | 2026-10-31 | Fase 7, parte 2: **monitores do sistema** — mudança de rede (netlink → `UM_NETWORK_CHANGE` → `OnTimerNetworkChange`: `PortKnock`, `pjsua_handle_ip_change`, endereço público e novo registro), suspensão/retomada (logind `PrepareForSleep` com trava *delay* → `OnPowerBroadcast`: `PJDestroy` e `UM_RECREATE`), troca de dispositivos de áudio (eventos do PulseAudio → `OnDeviceChange` → `IDT_TIMER_SWITCH_DEVICES`), inibição de ociosidade/suspensão durante chamadas (gnome-session ou logind, no lugar de `SetThreadExecutionState`), presença "ausente" por inatividade (`IDT_TIMER_IDLE` com o monitor de ociosidade do GNOME); patch no pjproject (uso de memória liberada no refresh das câmeras V4L2); 100 testes. |
@@ -358,6 +359,13 @@
 - **CLI de teste:** `--video` (vídeo pelo gerador de barras de cor, nunca a câmera; atende com vídeo; SDL com o driver `dummy`), `videocall <número>`, `video` (estado, direção e pacotes do vídeo de cada chamada) e vídeo no `devices` (a câmera do notebook aparece como "Integrated Camera", V4L2, 12 formatos). Corrigido: `quit` como primeiro comando chamava `QCoreApplication::quit()` antes do laço de eventos e a CLI não terminava.
 - **Testes:** `Video.RenderizadorQtEPrevia` (Qt como renderizador padrão e sem SDL; prévia pelo botão das Configurações com as barras de cor encaixadas e pintadas; fechar para a câmera e libera a janela) e `Video.VideochamadaRealComCli` (`MSIP_TEST_SIP=1`: videochamada com a CLI, vídeo remoto pintado na janela, a CLI recebendo o vídeo da janela, fechar a janela remota não derruba a chamada, desligar fecha a prévia e as janelas). A câmera real não foi ligada nos testes (fica para o responsável). 111 testes no build normal e no ASan/UBSan.
 
+### 2026-11-01 — Sessão 35: Fase 9 — pacote .deb e ícone próprio (0.9.0)
+- **Pacote `.deb`:** `cmake/Packaging.cmake` (incluído pelo `CMakeLists.txt`) instala `.desktop` (`resources/linux/mysimplesip.desktop`, com os links `sip:`/`tel:`/`callto:`), ícones hicolor (PNG 16–256 e SVG), metainfo do AppStream (`io.github.ggty81.MySimpleSIP`, versão e data preenchidas pelo CMake; `appstreamcli validate` ok) e, com prefixo `/usr`, a regra do udev dos fones HID apontando para `/usr/libexec/mysimplesip/mysimplesip-hid-check` (`postinst` recarrega o udev e reaplica aos `hidraw` conectados; `postrm` recarrega). CPack DEB: `dpkg-shlibdeps` calcula as bibliotecas (pjproject estático), mais `qt6-svg-plugins` e `pipewire-pulse | pulseaudio`; recomenda `gnome-keyring`; binário sem símbolos; pastas 0755 independentemente do `umask`; documentação em `/usr/share/doc/mysimplesip`. `scripts/build-deb.sh` compila em `build-deb/` (Release, `/usr`, sem testes) e gera `dist/mysimplesip_<versão>_amd64.deb` (≈ 2,4 MB; `dist/` no `.gitignore`).
+- **Verificação:** o contêiner Ubuntu 26.04 limpo não roda aqui (o ambiente tem a trava "no new privileges": `newuidmap` e `sudo` falham). Feito no lugar: `apt-get -s install` do pacote; cada dependência conferida no main/universe do 26.04 (as do FFmpeg no universe, sem precisar do ESM); pacote extraído com `dpkg-deb -x` e o binário empacotado aberto (versões, tela em português com o langpack do pacote, verificador do HID recusando o mouse). Instalar num sistema limpo fica para o responsável.
+- **Ícone próprio** (identidade, ANALISE §5.6 — o logotipo é do MicroSIP): `resources/brand/` com o SVG do aplicativo (fone branco com ondas sobre quadrado arredondado azul) e as variantes da bandeja (cinza sem registro, ponto vermelho de chamada perdida); PNGs gerados por `scripts/render-brand-icons.sh` (plugin de SVG do Qt; o renderizador do ImageMagick não desenha gradientes/curvas), `resources/brand.qrc`; `LoadImageIcon` devolve os próprios para `IDI_MAINFRAME`, `IDI_INACTIVE` e `IDI_MISSED`, e a janela principal define o ícone do aplicativo. O `install-desktop-entry.sh` também passou a usá-los. Os demais ícones da interface continuam os do MicroSIP.
+- **Caminho dos sons** pelo prefixo de instalação (`MSIP_DATA_DIR`, como os langpacks), no lugar do `/usr/share` fixo.
+- **Testes:** `Brand.IconesProprios`; 112 testes no build normal e no ASan/UBSan.
+
 ---
 
 ## Ambiente de desenvolvimento verificado (2026-10-30)
@@ -391,9 +399,9 @@ Indisponíveis nos repositórios: `sipp` (usar contêiner com Podman) e `libilbc
 
 ## Decisões pendentes (perguntar ao responsável)
 
-- [ ] Nome final do produto e ícone ("MySimpleSIP"?).
+- [x] Nome "MySimpleSIP" (decidido) e ícone próprio provisório desenhado na 0.9.0 (`resources/brand/*.svg`; o responsável pode trocá-lo).
 - [ ] Vídeo desde o início ou versão só-áudio primeiro (vídeo na 0.8.0)?
-- [ ] Formatos de distribuição: `.deb` / Flatpak / AppImage / Snap.
+- [x] Formatos de distribuição: `.deb` (CPack) na 1.0.0; Flatpak/AppImage depois.
 - [ ] Atualização automática e crash report: desativar ou servidor próprio?
 - [ ] Padrão XWayland (recomendado) ou Wayland nativo.
 - [ ] Repositório remoto (GitHub/GitLab) e licença (GPL-2.0-or-later recomendada) — adiado para a 1.0.0.
@@ -500,7 +508,10 @@ Indisponíveis nos repositórios: `sipp` (usar contêiner com Podman) e `libilbc
 - [x] V4L2 + renderer Qt próprio, preview, janela de vídeo, codecs VP8/VP9/H.264/H.263 (0.8.0).
 
 ### Fase 9 — Polimento e empacotamento → 0.9.0
-- [ ] Langpack pt-BR, sons e ícone próprios, `.deb` (CPack, com udev/.desktop/metainfo), Flatpak/AppImage.
+- [x] `.deb` (CPack, com udev/.desktop/metainfo/ícones) e ícone próprio (0.9.0).
+- [x] Langpack pt-BR: o do MicroSIP, com os textos do port traduzidos por ele (0.9.0).
+- [-] Sons próprios: mantidos os do MicroSIP (GPL, mesmos nomes de arquivo; trocar é só substituir `resources/sounds/`).
+- [-] Flatpak/AppImage: adiados para depois da 1.0.0 (decisão da sessão 27: `.deb` primeiro).
 
 ### Fase 10 — Paridade → 1.0.0
 - [ ] Testes de interoperabilidade e comparação lado a lado com o MicroSIP (3.22.12 no Bottles); fechar o checklist de paridade (ANALISE §3.4).

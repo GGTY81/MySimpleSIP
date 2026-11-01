@@ -16,9 +16,10 @@ SCHEMES="sip tel callto"
 
 if [[ "${1:-}" == "--remove" ]]; then
     rm -f "$DESKTOP"
-    for size in 16 24 32 48 64 256; do
+    for size in 16 24 32 48 64 128 256; do
         rm -f "$ICONS/${size}x${size}/apps/mysimplesip.png"
     done
+    rm -f "$ICONS/scalable/apps/mysimplesip.svg"
     update-desktop-database "$APPS" 2>/dev/null || true
     echo "Atalho removido."
     exit 0
@@ -30,10 +31,12 @@ if [[ ! -x "$EXE" ]]; then
 fi
 
 mkdir -p "$APPS"
-for size in 16 24 32 48 64 256; do
+for size in 16 24 32 48 64 128 256; do
     mkdir -p "$ICONS/${size}x${size}/apps"
-    cp "$ROOT/resources/icons/microsip/${size}.png" "$ICONS/${size}x${size}/apps/mysimplesip.png"
+    cp "$ROOT/resources/brand/png/${size}/mysimplesip.png" "$ICONS/${size}x${size}/apps/mysimplesip.png"
 done
+mkdir -p "$ICONS/scalable/apps"
+cp "$ROOT/resources/brand/mysimplesip.svg" "$ICONS/scalable/apps/mysimplesip.svg"
 cat > "$DESKTOP" <<DESK
 [Desktop Entry]
 Type=Application
