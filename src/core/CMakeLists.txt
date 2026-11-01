@@ -10,6 +10,7 @@ add_library(msip_core STATIC
     CMask.cpp
     Mp3Encode.cpp
     PulseAudioDev.cpp
+    HidParser.cpp
 )
 target_include_directories(msip_core PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
 find_package(PkgConfig REQUIRED)

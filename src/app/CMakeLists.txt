@@ -3,6 +3,7 @@ add_library(msip_appqt STATIC
     QtMessageBackend.cpp
     KeychainPasswordStore.cpp
     SystemMonitors.cpp
+    MediaKeys.cpp
 )
 set_target_properties(msip_appqt PROPERTIES AUTOMOC ON)
 target_include_directories(msip_appqt PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")

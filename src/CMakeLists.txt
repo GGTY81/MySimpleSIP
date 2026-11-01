@@ -9,6 +9,7 @@ add_subdirectory(data)
 add_subdirectory(app)
 add_subdirectory(cli)
 add_subdirectory(ui)
+add_subdirectory(tools)
 
 qt_add_executable(mysimplesip
     main.cpp

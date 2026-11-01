@@ -22,6 +22,8 @@
 #include <QApplication>
 #include <QDir>
 #include <QHash>
+#include <QPainter>
+#include <QPixmap>
 
 namespace {
 
@@ -41,6 +43,31 @@ QFont DialogFont()
     QFont f = QApplication::font();
     f.setPixelSize(11);
     return f;
+}
+
+bool IsDarkTheme()
+{
+    const QPalette p = QApplication::palette();
+    return p.color(QPalette::Window).lightness() < p.color(QPalette::WindowText).lightness();
+}
+
+QIcon ThemedGlyphIcon(int id)
+{
+    QIcon icon = LoadImageIcon(id);
+    if (!IsDarkTheme()) {
+        return icon;
+    }
+    QIcon tinted;
+    const QColor color = QApplication::palette().color(QPalette::WindowText);
+    for (const QSize& size : icon.availableSizes()) {
+        QPixmap pm = icon.pixmap(size);
+        QPainter p(&pm);
+        p.setCompositionMode(QPainter::CompositionMode_SourceIn);
+        p.fillRect(pm.rect(), color);
+        p.end();
+        tinted.addPixmap(pm);
+    }
+    return tinted;
 }
 
 QString TR(LPCTSTR english)

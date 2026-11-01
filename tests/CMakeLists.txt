@@ -27,6 +27,7 @@ add_executable(test_core
     core/test_core.cpp
     core/test_mp3.cpp
     core/test_pulse_audio.cpp
+    core/test_hid_parser.cpp
 )
 target_link_libraries(test_core PRIVATE msip_core GTest::gtest)
 target_include_directories(test_core PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
@@ -70,6 +71,7 @@ qt_add_executable(test_ui
     ui/test_chat.cpp
     ui/test_command_line.cpp
     ui/test_system_monitors.cpp
+    ui/test_headset.cpp
     "${PROJECT_SOURCE_DIR}/resources/resources.qrc"
     "${PROJECT_SOURCE_DIR}/resources/layout.qrc"
 )

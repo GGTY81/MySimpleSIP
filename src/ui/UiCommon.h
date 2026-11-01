@@ -48,6 +48,13 @@ QWidget* CreateUpDown(QWidget* parent, bool horizontal);
 // DPI), na família de fonte do sistema, para os controles caberem nas posições originais.
 QFont DialogFont();
 
+// MySimpleSIP: tema escuro (CThemeDialog::ApplyTheme lê AppsUseLightTheme no Windows); aqui
+// vale a paleta que o Qt recebe do sistema (esquema de cores do GNOME), que muda sozinha
+// quando o usuário troca o tema.
+bool IsDarkTheme();
+// Ícone de glifo escuro (ex.: IDI_DROPDOWN) tingido com a cor do texto no tema escuro.
+QIcon ThemedGlyphIcon(int id);
+
 // Unidades de diálogo do Windows (MS Sans Serif 8 pt, 96 DPI) → pixels lógicos do Qt.
 // Ver docs/layout/DIALOGOS.md.
 inline int DluX(int dlu)

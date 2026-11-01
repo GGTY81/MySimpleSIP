@@ -1,0 +1,17 @@
+--- a/pjmedia/src/pjmedia-audiodev/audiodev.c	2026-11-01 00:09:05.517795774 -0300
++++ b/pjmedia/src/pjmedia-audiodev/audiodev.c	2026-11-01 00:09:05.528603611 -0300
+@@ -118,7 +118,13 @@
+ #if PJMEDIA_AUDIO_DEV_HAS_BB10
+     aud_subsys->drv[aud_subsys->drv_cnt++].create = &pjmedia_bb10_factory;
+ #endif
+-#if PJMEDIA_AUDIO_DEV_HAS_ALSA
++/* MySimpleSIP: o ALSA pode ficar compilado sem entrar sozinho na lista; o aplicativo
++ * registra o backend do PulseAudio/PipeWire e só recorre ao ALSA sem servidor de som.
++ * Enumerar os PCMs do ALSA abre o plugin do JACK, que enche o stderr de mensagens. */
++#ifndef PJMEDIA_AUDIO_DEV_ALSA_AUTO_REGISTER
++#   define PJMEDIA_AUDIO_DEV_ALSA_AUTO_REGISTER 1
++#endif
++#if PJMEDIA_AUDIO_DEV_HAS_ALSA && PJMEDIA_AUDIO_DEV_ALSA_AUTO_REGISTER
+     aud_subsys->drv[aud_subsys->drv_cnt++].create = &pjmedia_alsa_factory;
+ #endif
+ #if PJMEDIA_AUDIO_DEV_HAS_COREAUDIO

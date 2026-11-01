@@ -1283,14 +1283,16 @@ void MessagesDlg::AddMessage(MessagesContact* messagesContact, CString message, 
     // (mensagens do sistema em cinza 8 pt)
     QString color;
     CString name;
+    // MySimpleSIP: no tema escuro, texto local na cor do tema e o azul claro que o MicroSIP
+    // usa nos links do tema escuro (RGB 77,178,255)
     if (type == MSIP_MESSAGE_TYPE_LOCAL) {
-        color = QStringLiteral("#000000");
+        color = IsDarkTheme() ? QApplication::palette().color(QPalette::Text).name() : QStringLiteral("#000000");
         if (!accountSettings.account.displayName.IsEmpty()) {
             name = accountSettings.account.displayName;
         }
     }
     else if (type == MSIP_MESSAGE_TYPE_REMOTE) {
-        color = QStringLiteral("#1565ce");
+        color = IsDarkTheme() ? QStringLiteral("#4db2ff") : QStringLiteral("#1565ce");
         name = messagesContact->name;
         int pos = name.Find(_T(" ("));
         if (pos == -1) {

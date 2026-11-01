@@ -8,8 +8,9 @@ plano de fases em [ANALISE_E_PLANO.md](ANALISE_E_PLANO.md).
 
 C++20 · CMake/Ninja · Qt 6 Widgets · pjproject 2.15.1 (compilado estaticamente por
 `scripts/build-pjproject.sh`, com `third_party/pjproject/config_site.h` e patches próprios em
-`third_party/pjproject/patches/`: compatibilidade com FFmpeg 8 e correção no refresh das câmeras V4L2) ·
-SQLiteCpp · jsoncpp · QtKeychain · libpulse · libmp3lame · GoogleTest.
+`third_party/pjproject/patches/`: compatibilidade com FFmpeg 8, correção no refresh das câmeras V4L2 e
+ALSA fora da lista automática de dispositivos — o app só o registra sem servidor de som) ·
+SQLiteCpp · jsoncpp · QtKeychain · libpulse · libmp3lame · hidapi · GoogleTest.
 
 ## Compilar
 
@@ -39,7 +40,7 @@ Testes opcionais (usam recursos reais da máquina):
 
 | Variável | Testes | Requisito |
 |---|---|---|
-| `MSIP_TEST_SIP=1` | chamadas, presença, transferência, conferência, gravação, comandos e mensagens SIP reais pela janela, contra o `msip-cli` | portas UDP 5060, 5070 e 5080 livres |
+| `MSIP_TEST_SIP=1` | chamadas, presença, transferência, conferência, gravação, comandos, mensagens SIP, fone HID e teclas de mídia reais pela janela, contra o `msip-cli` | portas UDP 5060, 5070 e 5080 livres |
 | `MSIP_TEST_AUDIO=1` | backend PulseAudio/PipeWire (1 s tocando silêncio e lendo o microfone) e monitor de dispositivos (cria e retira um *null-sink* temporário) | servidor de som e `pactl` |
 | `MSIP_TEST_KEYRING=1` | senha no chaveiro do GNOME | sessão gráfica com chaveiro |
 
@@ -57,7 +58,13 @@ T=$(mktemp -d); XDG_CONFIG_HOME=$T/c XDG_DATA_HOME=$T/d XDG_STATE_HOME=$T/s \
 ```
 
 (`MSIP_SCREENSHOT_DIALOG`: vazio = janela principal, `account`, `messages`, `ringin`,
-`contact`, `transfer`, `settings`, `shortcuts`, `export`.)
+`contact`, `transfer`, `settings`, `shortcuts`, `export`.) Com `QT_QPA_PLATFORM=offscreen` a
+tela sai sempre no tema claro; para ver o tema escuro, rode na sessão gráfica com
+`--minimized` (a janela fica escondida). Como o `XDG_CONFIG_HOME` temporário esconde o dconf
+do GTK, copie `~/.config/dconf/user` para `$T/c/dconf/user` antes e apague a cópia depois.
+
+O fone HID e as teclas de mídia são testados com um fone falso (`HidIo`, em
+`tests/ui/test_headset.cpp`) e com o próprio barramento D-Bus da sessão (player MPRIS).
 
 A CLI de teste do núcleo (`build/src/cli/msip-cli`) faz chamadas sem interface — veja o
 comentário no topo de `src/cli/msip_cli.cpp` (comandos `call`, `answer`, `hangup`, `hold`,
@@ -71,11 +78,12 @@ comentário no topo de `src/cli/msip_cli.cpp` (comandos `call`, `answer`, `hangu
 | `src/common/` | `define.h`, `const.h`, `resource.h` do original. |
 | `src/settings/` | Port de `settings.cpp` (INI), caminhos XDG, senhas. |
 | `src/i18n/` | Langpacks do MicroSIP. |
-| `src/core/` | Núcleo de telefonia: `global.cpp`, `MSIP.cpp`, parte pjsua do `CmainDlg`, callbacks, HTTP, MP3, backend PulseAudio. |
+| `src/core/` | Núcleo de telefonia: `global.cpp`, `MSIP.cpp`, parte pjsua do `CmainDlg`, callbacks, HTTP, MP3, backend PulseAudio, leitor de descritor HID (`HidParser`, no lugar do `hid.dll`). |
 | `src/data/`, `src/service/`, `src/domain/`, `src/utils/` | Histórico (SQLite), contatos, CSV, XML (`CMarkup` próprio). |
-| `src/app/` | Integração Qt: fila de mensagens, chaveiro. |
+| `src/app/` | Integração Qt: fila de mensagens, chaveiro, monitores do sistema (rede, energia, ociosidade), teclas de mídia (player MPRIS). |
 | `src/ui/` | Janelas Qt: principal, discador, chamadas, chamada recebida, histórico, contatos, configurações e diálogos. |
 | `src/cli/` | `msip-cli`, CLI de teste do núcleo. |
+| `src/tools/` | `mysimplesip-hid-check`, verificador usado pela regra do udev dos fones HID (`resources/udev/`, `scripts/install-hid-rules.sh`). |
 | `resources/` | Ícones, bitmaps, sons e langpacks (gerados por `scripts/convert-resources.py`). |
 | `docs/layout/` | Layout dos diálogos do `.rc` original (`dialogs.json`, `DIALOGOS.md`) e capturas. |
 | `tests/` | GoogleTest (`compat`, `core`, `storage`, `ui`, `app`), `sip-lab/loopback.sh`, `pj-smoke`. |

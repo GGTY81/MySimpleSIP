@@ -19,6 +19,7 @@
 #include "langpack.h"
 #include "MessagesDlg.h"
 #include "mainDlg.h"
+#include "Hid.h"
 
 #include <QComboBox>
 #include <QKeyEvent>
@@ -1134,7 +1135,9 @@ void Dialer::OnBnClickedMuteInput()
         muteInput = TRUE;
     }
     OnHScroll(nullptr);
-    // MySimpleSIP: Hid::SetMute(muteInput) com headsetSupport → Fase 7
+    if (accountSettings.headsetSupport) {
+        Hid::SetMute(muteInput);
+    }
 }
 
 void Dialer::TimerVuMeter()

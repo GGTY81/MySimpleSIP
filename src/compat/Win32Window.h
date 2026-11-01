@@ -47,6 +47,18 @@ using TIMERPROC = void (*)(HWND, UINT, UINT_PTR, DWORD);
 #   define PBT_APMSUSPEND 0x0004
 #   define PBT_APMRESUMEAUTOMATIC 0x0012
 #endif
+// Gancho de shell (teclas de mídia): HSHELL_APPCOMMAND com o comando na palavra alta
+#ifndef HSHELL_APPCOMMAND
+#   define HSHELL_APPCOMMAND 12
+#   define FAPPCOMMAND_MASK 0xF000
+#   define GET_APPCOMMAND_LPARAM(lParam) ((short)(((WORD)((((DWORD_PTR)(lParam)) >> 16) & 0xffff)) & ~FAPPCOMMAND_MASK))
+#   define APPCOMMAND_MEDIA_NEXTTRACK 11
+#   define APPCOMMAND_MEDIA_PREVIOUSTRACK 12
+#   define APPCOMMAND_MEDIA_STOP 13
+#   define APPCOMMAND_MEDIA_PLAY_PAUSE 14
+#   define APPCOMMAND_MEDIA_PLAY 46
+#   define APPCOMMAND_MEDIA_PAUSE 47
+#endif
 
 // Ícones de balão da bandeja (Shell_NotifyIcon), usados como "flags" de BaloonPopup
 #ifndef NIIF_NONE

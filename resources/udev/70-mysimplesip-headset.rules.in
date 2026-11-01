@@ -1,0 +1,5 @@
+# MySimpleSIP: acesso do usuário da sessão aos fones USB com controles de telefonia (HID,
+# página 0x0B: gancho, mudo, LEDs de chamada), para a opção "Suporte a fone USB HID".
+# O verificador lê o descritor do dispositivo; teclados, mouses e demais dispositivos HID
+# continuam acessíveis só pelo root. Instalado por scripts/install-hid-rules.sh.
+ACTION=="add|change", SUBSYSTEM=="hidraw", PROGRAM="@HID_CHECK@ %S%p/device/report_descriptor", TAG+="uaccess"

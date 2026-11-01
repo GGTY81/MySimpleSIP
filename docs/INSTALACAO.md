@@ -109,6 +109,33 @@ Em menu → **Configurações**, os campos **Ouvir chamada em**, **Ouvir toque e
 dispositivo padrão escolhido em *Configurações do Ubuntu → Som* — inclusive quando um fone
 Bluetooth conecta. Recomenda-se deixar **Padrão**.
 
+### Teclas de mídia
+
+Marque **Usar teclas multimídia** nas Configurações. Durante uma chamada (ou com uma
+chamada tocando), as teclas de tocar/pausar e parar do teclado — e os botões de fones
+Bluetooth — passam a ir para o MySimpleSIP: tocar/pausar atende ou põe em espera, parar
+recusa ou desliga. Fora das chamadas, as teclas continuam com o seu player de música.
+
+### Fone USB com botões (HID)
+
+Fones USB de escritório (Jabra, Poly, EPOS, Yealink...) têm botão de atender/desligar,
+mudo e luzes de chamada. Para o MySimpleSIP usá-los:
+
+1. Libere o acesso ao fone (uma vez; pede a senha de administrador):
+
+   ```bash
+   sudo ./scripts/install-hid-rules.sh
+   ```
+
+   A regra do udev só libera dispositivos com controles de telefonia: teclados e mouses
+   continuam protegidos. Para desfazer: `sudo ./scripts/install-hid-rules.sh --remove`.
+2. Desconecte e conecte o fone de novo.
+3. Marque **Suporte para Fone de Ouvido** nas Configurações.
+
+Com o fone, tirar do gancho (botão de atender) atende a chamada que toca ou disca o número
+digitado, pôr no gancho desliga, e o botão de mudo e as luzes de toque, chamada e mudo
+seguem o aplicativo.
+
 ## 7. Linha de comando
 
 Os mesmos comandos do MicroSIP funcionam no terminal (ou em atalhos de teclado do GNOME).
@@ -152,6 +179,7 @@ Configurações, contatos e histórico ficam na sua pasta pessoal e são mantido
 ```bash
 cd MySimpleSIP
 ./scripts/install-desktop-entry.sh --remove   # remove o atalho do menu
+sudo ./scripts/install-hid-rules.sh --remove  # remove a regra do fone HID (se instalou)
 cd .. && rm -rf MySimpleSIP                   # remove o código e a compilação
 ```
 
@@ -171,7 +199,13 @@ Deixe os três dispositivos em **Padrão** nas Configurações e escolha o dispo
 *Configurações do Ubuntu → Som*. O MySimpleSIP usa o PipeWire (servidor de som padrão do
 Ubuntu).
 
-**Mensagens no terminal como `jack server is not running` ou `Failed to register with host portal`.**
+**O fone USB não atende nem acende as luzes.**
+Confira se a regra do udev foi instalada (`sudo ./scripts/install-hid-rules.sh`), se o fone
+foi reconectado depois disso e se **Suporte para Fone de Ouvido** está marcado. Com
+**Habilitar arquivo de log**, o log mostra os dispositivos encontrados (`Hid.cpp`); fones
+sem controles de telefonia (só áudio) não aparecem como "Telephony Device".
+
+**Mensagens no terminal como `Failed to register with host portal`.**
 São avisos de bibliotecas do sistema e podem ser ignorados.
 
 **A janela não aparece no lugar onde foi deixada.**

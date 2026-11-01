@@ -11,6 +11,7 @@
  */
 
 #include "DialerControls.h"
+#include "UiCommon.h"
 
 #include <QHash>
 #include <QPainter>
@@ -67,7 +68,8 @@ void CButtonDialer::paintEvent(QPaintEvent*)
         p.setPen(QColor(127, 127, 127));
         p.drawText(rtl, Qt::AlignLeft | Qt::AlignVCenter, it.value());
     } else {
-        p.setPen(forceNumeric ? QColor(80, 80, 80) : QColor(127, 127, 127));
+        // MySimpleSIP: no tema escuro o cinza-escuro dos dígitos vira cinza-claro
+        p.setPen(forceNumeric ? (IsDarkTheme() ? QColor(200, 200, 200) : QColor(80, 80, 80)) : QColor(127, 127, 127));
         p.drawText(rtl, Qt::AlignCenter, text);
     }
 }
@@ -136,5 +138,6 @@ void CLevelsSliderCtrl::paintEvent(QPaintEvent*)
     const int thumbW = 8;
     const int pos = range > 0 ? margin + (int)((double)(value() - minimum()) / range * (width() - 2 * margin)) : margin;
     QRect thumb(pos - thumbW / 2, height() / 2 - 7, thumbW, 15);
-    p.fillRect(thumb.adjusted(1, 1, -1, -1), isEnabled() ? QColor(170, 170, 170) : QColor(210, 210, 210));
+    // MySimpleSIP: desabilitado no tema escuro, mais escuro em vez de mais claro
+    p.fillRect(thumb.adjusted(1, 1, -1, -1), isEnabled() ? QColor(170, 170, 170) : (IsDarkTheme() ? QColor(90, 90, 90) : QColor(210, 210, 210)));
 }

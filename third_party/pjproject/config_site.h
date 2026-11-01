@@ -36,3 +36,8 @@
 
 /* Logs do pjsip disponíveis até o nível 5 (o MicroSIP grava log opcional) */
 #define PJ_LOG_MAX_LEVEL                    5
+
+/* ALSA compilado, mas fora da lista automática (patch 0003): o MySimpleSIP registra o
+ * backend do PulseAudio/PipeWire e usa o ALSA só sem servidor de som
+ * (msip_pulse_audio_install). Evita as mensagens do plugin JACK do ALSA no stderr. */
+#define PJMEDIA_AUDIO_DEV_ALSA_AUTO_REGISTER 0

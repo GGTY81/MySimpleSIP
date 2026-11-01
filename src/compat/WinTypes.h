@@ -15,6 +15,7 @@
 
 #include <cstdint>
 #include <cstdlib>
+#include <cstring>
 #include <cwchar>
 #include <cwctype>
 
@@ -41,6 +42,17 @@ using LONG = std::int32_t;
 using ULONG = std::uint32_t;
 using WCHAR = wchar_t;
 using HANDLE = void*;
+using UCHAR = unsigned char;
+using CHAR = char;
+using PCHAR = char*;
+using USHORT = unsigned short;
+
+#ifndef CALLBACK
+#   define CALLBACK
+#endif
+#ifndef ZeroMemory
+#   define ZeroMemory(dst, len) std::memset((dst), 0, (len))
+#endif
 
 #ifndef TRUE
 #   define TRUE 1

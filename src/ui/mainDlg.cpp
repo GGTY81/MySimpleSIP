@@ -25,6 +25,8 @@
 #include "Mp3Encode.h"
 #include "PulseAudioDev.h"
 #include "SystemMonitors.h"
+#include "MediaKeys.h"
+#include "Hid.h"
 
 #include <json/json.h>
 #include "CoreHost.h"
@@ -164,7 +166,8 @@ void CmainDlg::OnInitDialog()
     m_mainTab->setStyleSheet(QStringLiteral("QTabBar::tab { width: %1px; padding: 3px 0px; }").arg(DluX(_GLOBAL_TAB_WIDTH) - 4));
     top->addWidget(m_mainTab, 1);
     m_ButtonMenu = new QToolButton(this);
-    m_ButtonMenu->setIcon(LoadImageIcon(IDI_DROPDOWN));
+    // MySimpleSIP: glifo preto; no tema escuro, tingido (e refeito ao trocar o tema)
+    m_ButtonMenu->setIcon(ThemedGlyphIcon(IDI_DROPDOWN));
     m_ButtonMenu->setAutoRaise(true);
     m_ButtonMenu->setFixedSize(DluX(16) + 4, DluY(11) + 4);
     m_ButtonMenu->setToolTip(TR(_T("Menu")));
@@ -239,6 +242,16 @@ void CmainDlg::OnInitDialog()
     m_powerMonitor = new PowerMonitor(this);
     QObject::connect(m_powerMonitor, &PowerMonitor::aboutToSleep, this, [this] { OnPowerBroadcast(PBT_APMSUSPEND, 0); });
     QObject::connect(m_powerMonitor, &PowerMonitor::resumed, this, [this] { OnPowerBroadcast(PBT_APMRESUMEAUTOMATIC, 0); });
+    // RegisterShellHookWindow (teclas de mídia) → player MPRIS; como no PreTranslateMessage,
+    // os comandos só valem com enableMediaButtons
+    m_mediaKeys = new MediaKeys(this);
+    QObject::connect(m_mediaKeys, &MediaKeys::appCommand, this, [this](int nCmd) {
+        if (accountSettings.enableMediaButtons) {
+            onShellHookMessage(HSHELL_APPCOMMAND, (LPARAM)((DWORD)nCmd << 16)); // MAKELPARAM(0, nCmd)
+        }
+    });
+    QObject::connect(m_mediaKeys, &MediaKeys::raiseRequested, this, [this] { onTrayNotify(0, 0); });
+    m_mediaKeys->setEnabled(accountSettings.enableMediaButtons);
 
     // --- posição e tamanho (mesma regra do OnInitDialog original) ---
     // MySimpleSIP: no Wayland o compositor decide a posição; a regra vale no X11/XWayland.
@@ -674,6 +687,16 @@ void CmainDlg::MainPopupMenu(bool isMenuButton)
     menu->setAttribute(Qt::WA_DeleteOnClose);
     QPoint point = isMenuButton ? m_ButtonMenu->mapToGlobal(QPoint(0, m_ButtonMenu->height())) : QCursor::pos();
     menu->popup(point);
+}
+
+void CmainDlg::changeEvent(QEvent* event)
+{
+    // CThemeDialog::OnSettingChange("ImmersiveColorSet"): o Qt já troca a paleta; só o
+    // glifo do menu precisa ser refeito
+    if (event->type() == QEvent::PaletteChange && m_ButtonMenu) {
+        m_ButtonMenu->setIcon(ThemedGlyphIcon(IDI_DROPDOWN));
+    }
+    QWidget::changeEvent(event);
 }
 
 void CmainDlg::contextMenuEvent(QContextMenuEvent* event)
@@ -2106,6 +2129,25 @@ LRESULT CmainDlg::onMWIInfo(WPARAM wParam, LPARAM /*lParam*/)
     return 0;
 }
 
+bool CmainDlg::CommandCallAnswer() {
+    if (ringinDlgs.GetCount()) {
+        RinginDlg* ringinDlg = ringinDlgs.GetAt(0);
+        mainDlg->PostMessage(UM_CALL_ANSWER, (WPARAM)ringinDlg->GetCallId(), (LPARAM)0);
+        return true;
+    }
+    return false;
+}
+
+bool CmainDlg::CommandCallReject()
+{
+    if (ringinDlgs.GetCount()) {
+        RinginDlg* ringinDlg = ringinDlgs.GetAt(ringinDlgs.GetCount() - 1);
+        ringinDlg->OnBnClickedDecline();
+        return true;
+    }
+    return false;
+}
+
 bool CmainDlg::CommandCallPickup(CString number)
 {
     if (accountSettings.enableFeatureCodeCP && !accountSettings.featureCodeCP.IsEmpty()) {
@@ -2121,6 +2163,47 @@ bool CmainDlg::CommandCallPickup(CString number)
         return true;
     }
     return false;
+}
+
+LRESULT CmainDlg::onShellHookMessage(WPARAM wParam, LPARAM lParam)
+{
+    if (wParam == HSHELL_APPCOMMAND) {
+        int nCmd = GET_APPCOMMAND_LPARAM(lParam);
+        if (nCmd == APPCOMMAND_MEDIA_PLAY ||
+            nCmd == APPCOMMAND_MEDIA_PLAY_PAUSE ||
+            nCmd == APPCOMMAND_MEDIA_STOP) {
+            if (ringinDlgs.GetCount()) {
+                RinginDlg* ringinDlg = ringinDlgs.GetAt(0);
+                if (nCmd == APPCOMMAND_MEDIA_STOP) {
+                    ringinDlg->OnBnClickedDecline();
+                }
+                else {
+                    ringinDlg->CallAcceptDefault();
+                }
+            }
+            else {
+                if (nCmd == APPCOMMAND_MEDIA_STOP) {
+                    messagesDlg->OnBnClickedEnd();
+                }
+                else {
+                    // MySimpleSIP: GetWindowInfo(WS_VISIBLE) → isVisibleTo (a janela pode estar
+                    // na bandeja)
+                    QWidget* callButton = pageDialer->findChild<QWidget*>(QStringLiteral("IDC_CALL"));
+                    bool isButtonVisisble = callButton && callButton->isVisibleTo(pageDialer);
+                    if (isButtonVisisble && callButton->isEnabled()) {
+                        pageDialer->OnBnClickedCall();
+                    }
+                    else {
+                        messagesDlg->OnBnClickedHold();
+                    }
+                }
+            }
+        }
+        else if (nCmd == APPCOMMAND_MEDIA_PAUSE) {
+            messagesDlg->OnBnClickedHold();
+        }
+    }
+    return 0;
 }
 
 LRESULT CmainDlg::onRefreshLevels(WPARAM, LPARAM)
@@ -2538,7 +2621,13 @@ LRESULT CmainDlg::onCallState(WPARAM wParam, LPARAM lParam)
     if (m_powerMonitor) {
         m_powerMonitor->setCallActive(hasCalls);
     }
-    // MySimpleSIP: Hid::SetOffhookRing → Fase 7 (fone HID)
+    if (accountSettings.headsetSupport) {
+        Hid::SetOffhookRing(hasCalls, ringinDlgs.GetCount());
+    }
+    // MySimpleSIP: teclas de mídia vão para este player enquanto houver chamada (MPRIS)
+    if (m_mediaKeys) {
+        m_mediaKeys->setCallActive(hasCalls || ringinDlgs.GetCount());
+    }
     statistics.postCallState9 = 1;
     return 0;
 }
@@ -2635,7 +2724,13 @@ LRESULT CmainDlg::onIncomingCall(WPARAM wParam, LPARAM lParam)
                         onPlayerPlay(MSIP_SOUND_CUSTOM, (LPARAM)&accountSettings.ringtone);
                     }
             }
-            // MySimpleSIP: Hid::SetRing → Fase 7
+            if (accountSettings.headsetSupport) {
+                Hid::SetRing(true);
+            }
+            // MySimpleSIP: teclas de mídia para atender (player MPRIS "tocando")
+            if (m_mediaKeys) {
+                m_mediaKeys->setCallActive(true);
+            }
             statistics.postIncomingCall7 = 1;
             //--
             if (!accountSettings.cmdCallRing.IsEmpty()) {
@@ -2900,7 +2995,9 @@ void CmainDlg::OnTimer(UINT_PTR TimerVal)
                 }
             }
 #endif
-            // MySimpleSIP: Hid::OpenDevice (headsetSupport) → Fase 7 (fone HID)
+            if (accountSettings.headsetSupport) {
+                Hid::OpenDevice();
+            }
         }
         return;
     }
@@ -2991,6 +3088,14 @@ void CmainDlg::PlatformMonitorsStart()
             static_cast<CmainDlg*>(data)->PostMessage(WM_DEVICECHANGE, DBT_DEVNODES_CHANGED, 1);
         }, this);
     }
+    // fim do PJCreate original
+    if (accountSettings.headsetSupport) {
+        Hid::OpenDevice();
+    }
+    // MySimpleSIP: a opção das teclas de mídia pode ter mudado (Configurações recriam o pjsua)
+    if (m_mediaKeys) {
+        m_mediaKeys->setEnabled(accountSettings.enableMediaButtons);
+    }
 }
 
 void CmainDlg::PlatformMonitorsStop()
@@ -2998,6 +3103,9 @@ void CmainDlg::PlatformMonitorsStop()
     msip_pulse_audio_monitor_stop();
     delete m_networkMonitor;
     m_networkMonitor = nullptr;
+    // PJDestroy: Hid::CloseDevice(true) com headsetSupport
+    // MySimpleSIP: sem a condição, para fechar o fone também quando a opção foi desmarcada
+    Hid::CloseDevice(true);
 }
 
 LRESULT CmainDlg::OnNetworkChange(WPARAM wParam, LPARAM lParam)

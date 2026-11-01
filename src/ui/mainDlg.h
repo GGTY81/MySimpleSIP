@@ -43,6 +43,7 @@ class Shortcut;
 class QKeyEvent;
 class NetworkMonitor;
 class PowerMonitor;
+class MediaKeys;
 class QMessageBox;
 class QLabel;
 class QMenu;
@@ -105,7 +106,11 @@ public:
     LRESULT onMWIInfo(WPARAM wParam, LPARAM lParam);
     void OnMenuSettings();
     LRESULT OnRecreate(WPARAM wParam, LPARAM lParam);
+    bool CommandCallAnswer();
+    bool CommandCallReject();
     bool CommandCallPickup(CString number);
+    // teclas de mídia (HSHELL_APPCOMMAND no Windows; aqui vindas do player MPRIS)
+    LRESULT onShellHookMessage(WPARAM wParam, LPARAM lParam);
     LRESULT onRefreshLevels(WPARAM wParam, LPARAM lParam);
     LRESULT onCallState(WPARAM wParam, LPARAM lParam);
     LRESULT onCallMediaState(WPARAM wParam, LPARAM lParam);
@@ -176,6 +181,7 @@ public:
     CString dialNumberDelayed; // número da linha de comando à espera do registro
     PowerMonitor* m_powerMonitor = nullptr;     // vive com a janela (WM_POWERBROADCAST)
     NetworkMonitor* m_networkMonitor = nullptr; // entre PJCreate e PJDestroy
+    MediaKeys* m_mediaKeys = nullptr;           // vive com a janela (gancho de shell)
     bool missed = false;
 
 protected:
@@ -183,6 +189,7 @@ protected:
     void moveEvent(QMoveEvent* event) override;
     void resizeEvent(QResizeEvent* event) override;
     void contextMenuEvent(QContextMenuEvent* event) override;
+    void changeEvent(QEvent* event) override;
     // CBaseDialog::PreTranslateMessage: teclas de atalho da janela principal, da janela de
     // chamadas e das de chamada recebida (filtro instalado no QApplication)
     bool eventFilter(QObject* watched, QEvent* event) override;

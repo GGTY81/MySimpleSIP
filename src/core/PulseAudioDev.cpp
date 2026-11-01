@@ -26,7 +26,7 @@
 
 #define THIS_FILE "PulseAudioDev.cpp"
 
-// backend ALSA do pjproject (alsa_dev.c), retirado quando o PulseAudio está disponível
+// backend ALSA do pjproject (alsa_dev.c), registrado só sem servidor de som
 extern "C" pjmedia_aud_dev_factory* pjmedia_alsa_factory(pj_pool_factory* pf);
 
 namespace {
@@ -524,13 +524,12 @@ pjmedia_aud_dev_factory* pulse_factory_create(pj_pool_factory* pf)
 bool msip_pulse_audio_install()
 {
     g_active = false;
+    // o ALSA não entra sozinho na lista do pjmedia (patch 0003 / config_site.h): enumerar
+    // os PCMs dele abre o plugin do JACK, que enche o stderr de mensagens
     if (pjmedia_aud_register_factory(&pulse_factory_create) != PJ_SUCCESS) {
-        return false; // sem servidor de som: fica o ALSA
+        pjmedia_aud_register_factory(&pjmedia_alsa_factory); // sem servidor de som
+        return false;
     }
-    // o padrão do pjmedia é o do primeiro backend com dispositivos: retira o ALSA; o
-    // unregister só invalida as entradas dele, então a lista é refeita (refresh)
-    pjmedia_aud_unregister_factory(&pjmedia_alsa_factory);
-    pjmedia_aud_dev_refresh();
     g_active = true;
     return true;
 }

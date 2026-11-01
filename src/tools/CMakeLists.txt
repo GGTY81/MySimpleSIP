@@ -1,0 +1,5 @@
+# Verificador usado pela regra do udev dos fones HID (sem dependências: só o parser)
+add_executable(mysimplesip-hid-check hid_check.cpp "${PROJECT_SOURCE_DIR}/src/core/HidParser.cpp")
+target_include_directories(mysimplesip-hid-check PRIVATE "${PROJECT_SOURCE_DIR}/src/core")
+target_compile_options(mysimplesip-hid-check PRIVATE -Wall -Wextra)
+install(TARGETS mysimplesip-hid-check RUNTIME DESTINATION libexec/mysimplesip)
