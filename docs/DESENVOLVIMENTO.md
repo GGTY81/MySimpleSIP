@@ -56,7 +56,7 @@ T=$(mktemp -d); XDG_CONFIG_HOME=$T/c XDG_DATA_HOME=$T/d XDG_STATE_HOME=$T/s \
 ```
 
 (`MSIP_SCREENSHOT_DIALOG`: vazio = janela principal, `account`, `messages`, `ringin`,
-`contact`, `transfer`, `settings`.)
+`contact`, `transfer`, `settings`, `shortcuts`.)
 
 A CLI de teste do núcleo (`build/src/cli/msip-cli`) faz chamadas sem interface — veja o
 comentário no topo de `src/cli/msip_cli.cpp` (comandos `call`, `answer`, `hangup`, `hold`,

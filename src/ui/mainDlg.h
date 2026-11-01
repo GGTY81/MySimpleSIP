@@ -24,6 +24,8 @@
 #include "QtMessageBackend.h"
 
 #include <QHash>
+#include <QIcon>
+#include <QList>
 #include <QWidget>
 
 class AccountDlg;
@@ -34,6 +36,9 @@ class MessagesDlg;
 class RinginDlg;
 class Transfer;
 class SettingsDlg;
+class ShortcutsDlg;
+class Shortcut;
+class QKeyEvent;
 class QMessageBox;
 class QLabel;
 class QMenu;
@@ -115,6 +120,13 @@ public:
     LRESULT onBuddyState(WPARAM wParam, LPARAM lParam);
     void UsersDirectoryLoad(bool update = false) override;
     LRESULT onUsersDirectoryLoaded(WPARAM wParam, LPARAM lParam);
+    // atalhos do discador
+    void OnMenuShortcuts();
+    void ShortcutAction(Shortcut* shortcut, bool block = false, bool second = false);
+    void ShortcutsRemoveAll();
+    LRESULT OnRestart(WPARAM wParam, LPARAM lParam);
+    void OnMuteInput();
+    void OnMuteOutput();
 
     AccountDlg* accountDlg = nullptr;
     MessagesDlg* messagesDlg = nullptr;
@@ -123,7 +135,15 @@ public:
     Contacts* pageContacts = nullptr;
     Transfer* transferDlg = nullptr;
     SettingsDlg* settingsDlg = nullptr;
+    ShortcutsDlg* shortcutsDlg = nullptr;
     bool newMessages = false;
+    // estado dos atalhos na criação da janela (mudar posição/quantidade exige reiniciar)
+    bool shortcutsEnabled = false;
+    bool shortcutsBottom = false;
+    int shortcutsCount = 0;
+    int widthAdd = 0;
+    int heightAdd = 0;
+    QList<QIcon> imageListStatus; // mesma ordem de MSIP_CONTACT_ICON_*
     CArray<RinginDlg*> ringinDlgs;
     bool m_startMinimized = false;
     bool missed = false;
@@ -133,8 +153,12 @@ protected:
     void moveEvent(QMoveEvent* event) override;
     void resizeEvent(QResizeEvent* event) override;
     void contextMenuEvent(QContextMenuEvent* event) override;
+    // CBaseDialog::PreTranslateMessage: teclas de atalho da janela principal, da janela de
+    // chamadas e das de chamada recebida (filtro instalado no QApplication)
+    bool eventFilter(QObject* watched, QEvent* event) override;
 
 private:
+    bool PreTranslateKey(QWidget* window, QKeyEvent* event);
     QMenu* BuildMainMenu();
     void SetTrayIcon(const QIcon& icon, int state);
     // Libera os dados das mensagens cujos handlers ainda não foram portados.
@@ -155,3 +179,7 @@ private:
     bool m_created = false;
     bool m_closing = false;
 };
+
+// MySimpleSIP: OnRestart pede o reinício; main.cpp relança o executável depois de liberar o
+// servidor de instância única (no original, ShellExecute logo após OnClose)
+extern bool msip_restart_requested;

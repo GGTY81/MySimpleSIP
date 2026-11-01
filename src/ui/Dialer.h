@@ -15,7 +15,9 @@
 #include "QtMessageBackend.h"
 #include "afx.h"
 
+#include <QFont>
 #include <QIcon>
+#include <QList>
 #include <QWidget>
 
 class CButtonEx;
@@ -53,6 +55,11 @@ public:
     void SetCheckREC(bool checked);
     void EnableButtonCONF(bool enabled);
     void RebuildButtons(bool init = false);
+    void RebuildShortcutsRestart();
+    void RebuildShortcuts(bool init = false);
+    void PresenceSubscribe();
+    void PresenceReset();
+    void PresenceReceived(CString* buddyNumber, int image, bool ringing, bool fromUsersDirectory = false);
     void MuteOutput(bool state = true);
     void MuteInput(bool state = true);
     void RefreshLevels();
@@ -65,6 +72,7 @@ public:
     QPushButton* m_ButtonRec = nullptr;
     // GetDlgItem(IDC_...) para o MessagesDlg (UpdateHoldButton)
     QPushButton* DlgButton(const QString& id) const { return m_layout.Button(id); }
+    QList<QPushButton*> shortcutButtons; // IDC_SHORTCUT_RANGE + i
 
     void OnBnClickedOk();
     void OnBnClickedCall();
@@ -91,6 +99,7 @@ public:
     void OnBnClickedPlusOutput();
     void OnBnClickedMinusOutput();
     void OnHScroll(CLevelsSliderCtrl* sender);
+    void OnBnClickedShortcut(int i); // nID - IDC_SHORTCUT_RANGE
 
 protected:
     void resizeEvent(QResizeEvent* event) override;
@@ -102,6 +111,12 @@ private:
     bool HandleChar(QChar ch, bool isEdit); // PreTranslateMessage (WM_CHAR)
     bool IsEndVisible() const;
     QWidget* CreateBottomButton(LPCTSTR text, LPCTSTR tooltip, bool autoCheck, bool checked, const QRect& rect);
+    void OnTimerShortcutsBlink();
+    // MySimpleSIP: no original o discador é criado widthAdd/heightAdd maior e os controles do
+    // .rc ficam no tamanho base; aqui o AutoMove usa a área sem os atalhos e os botões de
+    // atalho são posicionados a cada redimensionamento (LayoutShortcuts)
+    QSize AutoMoveArea() const;
+    void LayoutShortcuts();
 
     QtMessageBackend* m_backend;
     CDialogLayout m_layout;
@@ -117,4 +132,7 @@ private:
     QPushButton* m_ButtonConf = nullptr;
     QIcon m_hIconMuteOutput, m_hIconMutedOutput, m_hIconMuteInput, m_hIconMutedInput;
     CString digitsDTMFDelayed;
+    QFont m_font_shortcuts;
+    bool blinkTimer = false;
+    bool blinkState = false;
 };

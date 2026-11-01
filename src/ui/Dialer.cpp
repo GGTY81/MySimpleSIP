@@ -10,8 +10,7 @@
  */
 
 // Port de Dialer.cpp (MicroSIP 3.22.16) sobre o IDD_DIALER original (CDialogLayout).
-// Atalhos (RebuildShortcuts, PresenceReceived) ficam para a Fase 6. Diferenças marcadas
-// com "MySimpleSIP:".
+// Diferenças marcadas com "MySimpleSIP:".
 
 #include "Dialer.h"
 
@@ -75,6 +74,7 @@ Dialer::Dialer(QtMessageBackend* backend, QWidget* parent) : QWidget(parent), m_
 Dialer::~Dialer()
 {
     KillTimer(IDT_TIMER_VU_METER);
+    KillTimer(IDT_TIMER_SHORTCUTS_BLINK);
     m_backend->Unregister(m_hWnd);
 }
 
@@ -85,6 +85,10 @@ void Dialer::OnInitDialog()
         m_SliderCtrlInput->setLayoutDirection(Qt::RightToLeft);
         m_number->setLayoutDirection(Qt::RightToLeft);
     }
+
+    QFont fontShortcuts = DialogFont();
+    fontShortcuts.setPixelSize(11);
+    m_font_shortcuts = fontShortcuts;
 
     m_layout.TranslateDialog(this);
 
@@ -262,6 +266,9 @@ LRESULT Dialer::WindowProc(UINT msg, WPARAM wParam, LPARAM)
         if (wParam == IDT_TIMER_VU_METER) {
             TimerVuMeter();
         }
+        if (wParam == IDT_TIMER_SHORTCUTS_BLINK) {
+            OnTimerShortcutsBlink();
+        }
         if (wParam == IDT_TIMER_DTMF) {
             KillTimer(IDT_TIMER_DTMF);
             DTMF(digitsDTMFDelayed);
@@ -274,7 +281,16 @@ LRESULT Dialer::WindowProc(UINT msg, WPARAM wParam, LPARAM)
 void Dialer::resizeEvent(QResizeEvent* event)
 {
     QWidget::resizeEvent(event);
-    m_layout.ApplyAutoMove(size());
+    m_layout.ApplyAutoMove(AutoMoveArea());
+    LayoutShortcuts();
+}
+
+QSize Dialer::AutoMoveArea() const
+{
+    if (!MainDlg() || !MainDlg()->shortcutsEnabled) {
+        return size();
+    }
+    return size() - QSize(MainDlg()->widthAdd, MainDlg()->heightAdd);
 }
 
 QWidget* Dialer::CreateBottomButton(LPCTSTR text, LPCTSTR tooltip, bool autoCheck, bool checked, const QRect& rect)
@@ -316,7 +332,7 @@ void Dialer::RebuildButtons(bool init)
         // MySimpleSIP: o original cria os botões com a janela no tamanho base; aqui as
         // posições partem da geometria original do botão de correio de voz e o AutoMove
         // os reposiciona
-        const QSize current = size();
+        const QSize current = AutoMoveArea();
         if (!init)
             m_layout.ApplyAutoMove(m_layout.BaseSize());
         QRect rect = DLG_ITEM(m_layout, IDC_DIALER_VOICEMAIL)->geometry();
@@ -370,6 +386,211 @@ void Dialer::RebuildButtons(bool init)
         }
         if (!init)
             m_layout.ApplyAutoMove(current);
+    }
+
+    RebuildShortcuts(init);
+}
+
+void Dialer::RebuildShortcutsRestart()
+{
+    if (accountSettings.enableShortcuts || MainDlg()->shortcutsEnabled) {
+        if (MainDlg()->shortcutsEnabled != accountSettings.enableShortcuts
+            ||
+            MainDlg()->shortcutsBottom != accountSettings.shortcutsBottom
+            ||
+            (!accountSettings.shortcutsBottom && (int)((shortcuts.GetCount() + _GLOBAL_SHORTCUTS_ROWS - 1) / _GLOBAL_SHORTCUTS_ROWS) != (int)((MainDlg()->shortcutsCount + _GLOBAL_SHORTCUTS_ROWS - 1) / _GLOBAL_SHORTCUTS_ROWS))
+            || (accountSettings.shortcutsBottom && shortcuts.GetCount() != MainDlg()->shortcutsCount)
+            ) {
+            if (accountSettings.enableShortcuts != MainDlg()->shortcutsEnabled || accountSettings.shortcutsBottom != MainDlg()->shortcutsBottom) {
+                accountSettings.SettingsSave();
+            }
+            MainDlg()->PostMessage(UM_RESTART, 0, 0);
+        }
+        else {
+            RebuildShortcuts();
+        }
+    }
+}
+
+void Dialer::RebuildShortcuts(bool init)
+{
+    if (!init) {
+        for (QPushButton* button : shortcutButtons) {
+            delete button;
+        }
+        shortcutButtons.clear();
+    }
+    if (!MainDlg()->shortcutsEnabled) {
+        return;
+    }
+    if (shortcuts.GetCount()) {
+        for (int i = 0; i < shortcuts.GetCount(); i++) {
+            Shortcut shortcut = shortcuts.GetAt(i);
+            // MySimpleSIP: CButtonSafe; com number2 (BS_AUTOCHECKBOX) vira botão de alternar
+            auto* button = new QPushButton(TR(shortcut.label), this);
+            if (!shortcut.number2.IsEmpty()) {
+                button->setCheckable(true);
+            }
+            if (shortcut.presence) {
+                shortcut.image = MSIP_CONTACT_ICON_DEFAULT;
+                button->setIcon(MainDlg()->imageListStatus.value(shortcut.image));
+            }
+            button->setFont(m_font_shortcuts);
+            QObject::connect(button, &QPushButton::clicked, this, [this, i] { OnBnClickedShortcut(i); });
+            button->show();
+            shortcutButtons.append(button);
+        }
+        LayoutShortcuts();
+        PresenceSubscribe();
+    }
+}
+
+void Dialer::LayoutShortcuts()
+{
+    const int count = shortcutButtons.size();
+    if (!count || !MainDlg()) {
+        return;
+    }
+    if (MainDlg()->shortcutsBottom) {
+        // abaixo de IDC_DIALER_LAST (y = 235 DLU), que acompanha a altura da área do discador
+        const int left = DluX(4);
+        const int right = width() - DluX(4);
+        int top = AutoMoveArea().height() + DluY(235) - m_layout.BaseSize().height();
+        const int buttonHeight = 25;
+        const int areaWidth = right - left;
+        for (int i = 0; i < count; i++) {
+            QRect buttonRect;
+            if (
+                count > _GLOBAL_SHORTCUTS_QTY / 2 || count > 6
+                ) {
+                int row = i % 2;
+                buttonRect = QRect(QPoint(left + row * areaWidth / 2, top), QPoint(right - (1 - row) * areaWidth / 2 - 1, top + buttonHeight - 1));
+                if (row) {
+                    top += buttonHeight;
+                }
+            }
+            else {
+                buttonRect = QRect(left, top, areaWidth, buttonHeight);
+                top += buttonHeight;
+            }
+            shortcutButtons.at(i)->setGeometry(buttonRect);
+        }
+    }
+    else {
+        // coluna à direita, de largura widthAdd, com os botões dividindo a altura
+        const int left = width() - MainDlg()->widthAdd;
+        const int right = width() - DluX(4);
+        const int areaTop = DluY(2);
+        const int areaHeight = height() - DluY(2) - DluY(1);
+        const int buttonHeight = areaHeight / count;
+        int top = areaTop + (areaHeight - buttonHeight * count) / 2;
+        for (int i = 0; i < count; i++) {
+            shortcutButtons.at(i)->setGeometry(left, top, right - left, buttonHeight);
+            top += buttonHeight;
+        }
+    }
+}
+
+void Dialer::PresenceSubscribe()
+{
+    if (shortcuts.GetCount() == shortcutButtons.size()) {
+        for (int i = 0; i < shortcuts.GetCount(); i++) {
+            Shortcut* shortcut = &shortcuts.GetAt(i);
+            if (shortcut->presence) {
+                CString number = shortcut->number;
+                MainDlg()->SubsribeNumber(number);
+            }
+        }
+    }
+}
+
+void Dialer::PresenceReset()
+{
+    if (shortcuts.GetCount() == shortcutButtons.size()) {
+        for (int i = 0; i < shortcuts.GetCount(); i++) {
+            Shortcut* shortcut = &shortcuts.GetAt(i);
+            if (shortcut->presence) {
+                shortcut->image = MSIP_CONTACT_ICON_DEFAULT;
+                shortcut->ringing = false;
+                shortcutButtons.at(i)->setIcon(MainDlg()->imageListStatus.value(shortcut->image));
+            }
+        }
+    }
+}
+
+void Dialer::PresenceReceived(CString* buddyNumber, int image, bool ringing, bool fromUsersDirectory)
+{
+    if (shortcuts.GetCount() == shortcutButtons.size()) {
+        bool blink = false;
+        for (int i = 0; i < shortcuts.GetCount(); i++) {
+            Shortcut* shortcut = &shortcuts.GetAt(i);
+            if (shortcut->presence || fromUsersDirectory) {
+                CString numberFormated = shortcut->number;
+                if (!fromUsersDirectory) {
+                    CString commands;
+                    numberFormated = FormatNumber(numberFormated, &commands, true);
+                }
+                if (*buddyNumber == numberFormated) {
+                    if (ringing) {
+                        blink = true;
+                    }
+                    shortcut->image = image;
+                    shortcut->ringing = ringing;
+                    shortcutButtons.at(i)->setIcon(MainDlg()->imageListStatus.value(shortcut->image));
+                }
+            }
+        }
+        if (blink) {
+            if (!blinkTimer) {
+                blinkTimer = true;
+                SetTimer(IDT_TIMER_SHORTCUTS_BLINK, 500, NULL);
+                OnTimerShortcutsBlink();
+            }
+        }
+    }
+}
+
+void Dialer::OnTimerShortcutsBlink()
+{
+    if (!blinkTimer) {
+        return;
+    }
+    bool ringing = false;
+    if (shortcuts.GetCount() == shortcutButtons.size()) {
+        for (int i = 0; i < shortcuts.GetCount(); i++) {
+            Shortcut* shortcut = &shortcuts.GetAt(i);
+            if (shortcut->ringing) {
+                ringing = true;
+                shortcutButtons.at(i)->setIcon(MainDlg()->imageListStatus.value(blinkState ? shortcut->image : MSIP_CONTACT_ICON_BLANK));
+            }
+        }
+    }
+    if (!ringing) {
+        blinkTimer = false;
+        // MySimpleSIP: o original para IDT_TIMER_CONTACTS_BLINK (de outra janela) e o
+        // temporizador dos atalhos continuava disparando à toa
+        KillTimer(IDT_TIMER_SHORTCUTS_BLINK);
+        blinkState = false;
+    }
+    else {
+        blinkState = !blinkState;
+    }
+}
+
+void Dialer::OnBnClickedShortcut(int i)
+{
+    if (shortcuts.GetCount() == shortcutButtons.size()) {
+        Shortcut shortcut = shortcuts.GetAt(i);
+        QPushButton* button = shortcutButtons.at(i);
+        MainDlg()->ShortcutAction(&shortcut, false, !button->isChecked());
+        if (!button->isChecked()) {
+            button->setText(QS(shortcut.label));
+        }
+        else {
+            if (!shortcut.label2.IsEmpty()) {
+                button->setText(QS(shortcut.label2));
+            }
+        }
     }
 }
 

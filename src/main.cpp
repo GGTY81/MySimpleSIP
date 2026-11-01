@@ -28,6 +28,7 @@
 #include "Contacts.h"
 #include "Transfer.h"
 #include "SettingsDlg.h"
+#include "ShortcutsDlg.h"
 #include "mainDlg.h"
 
 #include "Paths.h"
@@ -35,6 +36,7 @@
 #include <QApplication>
 #include <QCryptographicHash>
 #include <QLocalServer>
+#include <QProcess>
 #include <QLocalSocket>
 #include <QCommandLineParser>
 #include <QTimer>
@@ -120,7 +122,7 @@ int main(int argc, char* argv[])
         // MSIP_SCREENSHOT_DIALOG=account captura o diálogo de conta (nova conta);
         // =messages, a janela de chamadas com uma aba de exemplo; =ringin, a de chamada recebida;
         // =contact, o diálogo de contato; =transfer, o de transferência;
-        // =settings, as Configurações
+        // =settings, as Configurações; =shortcuts, os Atalhos
         const QByteArray which = qgetenv("MSIP_SCREENSHOT_DIALOG");
         QTimer::singleShot(2500, dlg, [dlg, file, which] {
             QWidget* target = dlg;
@@ -164,6 +166,10 @@ int main(int argc, char* argv[])
                 dlg->OnMenuSettings();
                 target = dlg->settingsDlg;
             }
+            else if (which == "shortcuts") {
+                dlg->OnMenuShortcuts();
+                target = dlg->shortcutsDlg;
+            }
             else if (which == "ringin") {
                 auto* r = new RinginDlg(dlg, false);
                 r->SetCallerName(_T("Alice"));
@@ -183,5 +189,11 @@ int main(int argc, char* argv[])
     delete dlg;
     SetPasswordStore(nullptr);
     UnloadLangPackModule();
+    if (msip_restart_requested) {
+        // OnRestart (mudança na posição ou na quantidade de atalhos): libera a instância
+        // única e abre o aplicativo de novo, com os mesmos argumentos
+        instanceServer.close();
+        QProcess::startDetached(QCoreApplication::applicationFilePath(), app.arguments().mid(1));
+    }
     return rc;
 }

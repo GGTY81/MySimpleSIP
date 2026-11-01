@@ -33,6 +33,8 @@
 - Presença/BLF dos contatos e diretório de usuários remoto (XML, JSON, CSV, Yealink).
 - Aviso de correio de voz (MWI), comandos externos por evento, desligamento automático.
 - Janela de Configurações completa (áudio, codecs, rede, gravação, atendimento, etc.).
+- Atalhos de discagem rápida no discador (coluna lateral ou embaixo), com alternância e
+  presença/BLF, e as teclas de atalho do MicroSIP (Ctrl+P, Ctrl+S, F2, F4...).
 - Áudio pelo PipeWire/PulseAudio: os dispositivos aparecem com os nomes do sistema e o
   "Padrão" segue o dispositivo padrão do GNOME (inclusive fones Bluetooth).
 - Ícone na bandeja, instância única, senhas guardadas no chaveiro do GNOME, interface em
@@ -40,8 +42,7 @@
 
 **Em andamento** (veja o [plano](docs/ANALISE_E_PLANO.md))
 
-- Atalhos/discagem rápida, teclas de atalho do menu, exportar/importar configuração e
-  mensagens SIP (chat) — Fase 6.
+- Exportar/importar configuração e mensagens SIP (chat) — Fase 6.
 - Integração com o sistema (teclas de mídia, fones USB HID, mudança de rede, links `sip:`) — Fase 7.
 - Vídeo — Fase 8. Pacote `.deb` e Release — Fase 9 (versão 1.0.0).
 

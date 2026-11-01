@@ -7,13 +7,13 @@
 
 | Campo | Valor |
 |---|---|
-| Versão vigente | **0.5.2** (ver arquivo `VERSION`) |
+| Versão vigente | **0.5.3** (ver arquivo `VERSION`) |
 | Fase | 6 — Configurações e mensagens (→ 0.6.0), em andamento. Fases 0 a 5 concluídas |
 | Base de referência | MicroSIP 3.22.16 (fonte em `reference/MicroSIP-3.22.16/`) + sons/langpacks do binário 3.22.12 (`reference/MicroSIP-3.22.12-assets/`), ambos somente leitura. MicroSIP 3.22.12 instalado no Bottles serve de comparação visual/funcional |
 | Pilha decidida | C++20 · CMake/Ninja · Qt 6 Widgets · pjproject 2.15.1 (mesma versão do binário do MicroSIP; tarball em `third_party/`) · SQLite/SQLiteCpp · QtKeychain · hidapi |
 | Alvo | Ubuntu 26.04 LTS, x86_64, GNOME (Wayland, rodando via XWayland por padrão) |
 | Repositório | https://github.com/GGTY81/MySimpleSIP (público, `main`) |
-| Próxima ação | Fase 6, parte 2: `ShortcutsDlg` + atalhos/speed-dial no Discador (com presença dos atalhos), teclas de atalho do menu (aceleradores, ex. Ctrl+P), exportar/importar configuração (`ExportDlg`/`ImportDlg`) e chat SIP (`onPager`/`MessagesIncoming`). Pendente: testes reais do responsável (Configurações, agenda, presença, diretório, transferência, gravação) |
+| Próxima ação | Fase 6, parte 3: exportar/importar configuração (`ExportDlg`/`ImportDlg`) e chat SIP (`onPager`/`MessagesIncoming`/`UM_ON_PAGER`). Pendente: testes reais do responsável (atalhos com BLF, teclas de atalho, agenda, transferência, gravação) |
 
 ## Convenções
 
@@ -45,6 +45,7 @@
 | 0.2.1 | 2026-10-30 | Fase 3, parte 1: senhas no chaveiro do sistema (`KeychainPasswordStore`, QtKeychain/Secret Service); janela principal Qt `CmainDlg` (deriva de `CmainDlgCore`): abas, botão de menu, barra de status com ícone, `UpdateWindowText`, bandeja, menu principal, posição/tamanho salvos; `main.cpp` passa a abrir a janela real. |
 | 0.2.2 | 2026-10-30 | Fase 3, parte 2: `CDialogLayout` (monta qualquer `IDD_*` a partir de `dialogs.json`, controles acessados pelo ID do `.rc`); `AccountDlg` portado (nova/editar/excluir conta, conta local, senha no chaveiro); teste de interface offscreen `test_ui`. |
 | 0.2.3 | 2026-10-30 | Fase 3, parte 3: `Dialer` (aba Telefone) portado — teclado, número com histórico, Chamar/Encerrar, volumes/mudo, VU-meter, DTMF, DND/AA/FWD/AC/CONF/REC; controles `CButtonDialer/CButtonEx/CLevelsSliderCtrl`; `CDialogLayout` com controles próprios e `AutoMove/AutoUnmove`; chamadas pela janela com provisórios (`MakeCall/PerformCall`, toque e caixa Atender/Rejeitar). |
+| 0.5.3 | 2026-10-31 | Fase 6, parte 2: **atalhos do discador** — `ShortcutsDlg` (8 atalhos: rótulo, número, tipo de ação, alternância com 2º rótulo/número, presença/BLF; ativar e posição lateral/embaixo), botões no Discador (coluna lateral de 180 px ou linhas de 25 px embaixo, em duas colunas acima de 4), presença e "tocando" piscando nos botões, `CmainDlg::ShortcutAction/ShortcutsRemoveAll/OnRestart` (reinício ao mudar a posição); teclas de atalho do `CBaseDialog` (Ctrl+Tab, Ctrl+M/L/P/S/Q/I/O, F2, F4, F10); 91 testes. |
 | 0.5.2 | 2026-10-31 | Áudio pelo **PulseAudio/PipeWire**: backend próprio do pjmedia (`PulseAudioDev`) com os nomes dos dispositivos do sistema e o "Padrão" seguindo o dispositivo padrão do PipeWire (ex.: fone Bluetooth); ALSA como reserva sem servidor de som; comando `devices` na CLI de teste; 89 testes. |
 | 0.5.1 | 2026-10-31 | Fase 6, parte 1: janela de **Configurações** (`SettingsDlg`) portada com `AAOptionsDlg` (opções do atendimento automático) e `FeatureCodesDlg` (códigos de função) — toque e volume, dispositivos, codecs (habilitar/ordenar), vídeo, portas/rport, DNS SRV, STUN, gravação (pasta, MP3/WAV, automática, botão REC), DTMF, atendimento automático, desvio, recusa, diretório de usuários, ação padrão das listas, opções gerais e inicialização automática (XDG Autostart); salvar recria a sessão do pjsua (`OnRecreate`); 88 testes. |
 | **0.5.0** | 2026-10-31 | **Fim da Fase 5 (Chamadas avançadas).** Gravação em MP3 (WAV do pjsua convertido com a libmp3lame ao fim da gravação; padrão do MicroSIP); testes reais de conferência com três pontas (mesclar/separar no bridge), gravação automática e comandos externos por evento com desligamento automático; 87 testes. |
@@ -309,6 +310,13 @@
 - **Responsável ajustou o token; código publicado** em https://github.com/GGTY81/MySimpleSIP (`main` acompanhando `origin/main`). Conferido pela API: commits atribuídos a GGTY81, raiz só com os arquivos esperados, `.credentials` e `reference/` ausentes (404), `.git/config` sem token. Envio feito com `GIT_ASKPASS` temporário que lê o `.credentials` na hora.
 - **Créditos (pedido do responsável):** autor Giovanni Grimaldi Torelly <giovannigrimaldi@gmail.com> — os 89 avisos `Copyright (C) 2026 MySimpleSIP` do código passaram a esse nome e e-mail, seção de autor no README, identidade git do repositório com esse nome/e-mail (os 3 primeiros commits ficaram com `GGTY81 <GGTY81@users.noreply.github.com>`). Imagem do README trocada pela tela principal (discador): `docs/layout/janela-principal-0.5.2.png`.
 
+### 2026-10-31 — Sessão 29: Fase 6, parte 2 — atalhos do discador e teclas de atalho (0.5.3)
+- **`src/ui/ShortcutsDlg.{h,cpp}`**: port do `ShortcutsDlg.cpp` sobre o `IDD_SHORTCUTS` (IDs `base+i` das 8 linhas): tipos de ação na ordem do original (Chamar, Vídeo, Mensagem, DTMF, Transferência cega/assistida, Conferência e as variantes "Chamar / …"), alternância (`UpdateToggle` estreita o número e mostra o 2º rótulo/número), BLF, Habilitar e Posição inferior; Salvar = `ShortcutsRemoveAll` + leitura das linhas (descarta sem rótulo ou sem número, exceto transferências) + `ShortcutsSave` + `RebuildShortcutsRestart`. Diferenças marcadas: preenchimento imediato (o original posta `WM_USER+1` e preenche aos poucos); links "?" ocultos.
+- **`Dialer`**: `RebuildShortcuts/RebuildShortcutsRestart` (reinicia o app quando muda ativação, posição ou o número de linhas/colunas, senão só refaz os botões), `PresenceSubscribe/PresenceReset/PresenceReceived` e `OnTimerShortcutsBlink`, `OnBnClickedShortcut` (alternância troca rótulo e número). Diferença de layout marcada: o original cria o discador `widthAdd`/`heightAdd` maior com os controles do `.rc` no tamanho base; aqui o `AutoMove` usa a área sem os atalhos (`AutoMoveArea`) e os botões são posicionados a cada redimensionamento (`LayoutShortcuts`). Correção marcada: o original parava o temporizador errado (`IDT_TIMER_CONTACTS_BLINK`) ao fim do piscar.
+- **`CmainDlg`**: `ShortcutsLoad()` na criação (antes nunca era chamado) com `shortcutsEnabled/Bottom/Count`, `widthAdd` (180) e `heightAdd` (10 + linhas × 25) somados ao tamanho padrão; `imageListStatus`; `ShortcutAction`, `ShortcutsRemoveAll`, `OnMenuShortcuts` (menu e Ctrl+S); `UM_RESTART` → `OnRestart` (fecha e `main.cpp` relança o executável depois de liberar o servidor de instância única); presença dos atalhos ligada em `Subscribe/Unsubscribe/onBuddyState/onUsersDirectoryLoaded`.
+- **Teclas de atalho** (`CBaseDialog::PreTranslateMessage`, filtro no `QApplication` para a janela principal, a de chamadas e as de chamada recebida): Ctrl+Tab/Ctrl+Shift+Tab (abas, só na principal — marcado), Ctrl+M (conta), Ctrl+L (conta local), Ctrl+P (Configurações), Ctrl+S (Atalhos), Ctrl+Q (sair), Ctrl+I/Ctrl+` (mudo do microfone), Ctrl+O (mudo da saída), F2 (atender), F4 (desligar todas), Esc/F10 (foco no botão de menu). Ctrl+W (site) fica de fora enquanto o item não tem endereço.
+- **Testes:** `Shortcuts.ColunaLateralDialogoEAcoes` (coluna lateral, alternância, transferência sem número abre o `Transfer`, Ctrl+S, carga/edição/salvar no INI sem reinício, Ctrl+Tab, Ctrl+O, reinício ao mudar a posição) e `Shortcuts.EmbaixoEmDuasColunas` (7 atalhos em 4 linhas de 25 px abaixo dos volumes). 91 testes no build normal e no ASan/UBSan; interface com SIP real 20/20. Capturas: `docs/layout/atalhos-0.5.3.png` (`MSIP_SCREENSHOT_DIALOG=shortcuts`) e `docs/layout/discador-atalhos-0.5.3.png`.
+
 ---
 
 ## Ambiente de desenvolvimento verificado (2026-10-30)
@@ -435,7 +443,8 @@ Indisponíveis nos repositórios: `sipp` (usar contêiner com Podman) e `libilbc
 
 ### Fase 6 — Configurações e mensagens → 0.6.0
 - [x] `SettingsDialog` completo, `AAOptionsDialog`, `FeatureCodesDialog` (0.5.1).
-- [ ] `ShortcutsDialog` + speed-dial (com presença dos atalhos: `Dialer::PresenceSubscribe/PresenceReset/PresenceReceived`), `AAOptionsDialog`, `FeatureCodesDialog`, exportar/importar configuração (`ExportDlg`/`ImportDlg`).
+- [x] `ShortcutsDialog` + speed-dial com presença dos atalhos e teclas de atalho do menu (0.5.3).
+- [ ] Exportar/importar configuração (`ExportDlg`/`ImportDlg`).
 - [ ] Chat (SIP MESSAGE) na `MessagesWindow`, port knock.
 
 ### Fase 7 — Integração Linux → 0.7.0

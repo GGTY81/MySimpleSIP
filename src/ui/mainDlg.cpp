@@ -31,6 +31,7 @@
 #include "RinginDlg.h"
 #include "Transfer.h"
 #include "SettingsDlg.h"
+#include "ShortcutsDlg.h"
 #include "UiCommon.h"
 #include "langpack.h"
 
@@ -38,6 +39,7 @@
 #include <QClipboard>
 #include <QDir>
 #include <QHeaderView>
+#include <QKeyEvent>
 #include <QTemporaryFile>
 #include <QTreeWidget>
 #include <QCloseEvent>
@@ -60,6 +62,7 @@
 #include <netdb.h>
 
 #include <chrono>
+#include <functional>
 #include <condition_variable>
 #include <mutex>
 #include <thread>
@@ -113,6 +116,7 @@ L16/48000/2;LPCM 48 kHz Stereo");
 
 CmainDlg::~CmainDlg()
 {
+    qApp->removeEventFilter(this);
     msip_host.onEndCall = nullptr;
     m_backend->Unregister(m_hWnd);
     if (AfxGetApp()->m_pMainWnd == this)
@@ -159,8 +163,35 @@ void CmainDlg::OnInitDialog()
     top->addWidget(m_ButtonMenu, 0, Qt::AlignVCenter);
     root->addLayout(top);
 
+    // mainDlg->imageListStatus (presença dos atalhos do discador)
+    for (int id : {IDI_BLANK, IDI_UNKNOWN, IDI_OFFLINE, IDI_AWAY, IDI_ONLINE, IDI_ON_THE_PHONE, IDI_BUSY, IDI_DEFAULT}) {
+        imageListStatus.append(LoadImageIcon(id));
+    }
+
+    // OnCreate: atalhos e o espaço extra que eles ocupam no discador
+    ShortcutsLoad();
+    shortcutsEnabled = accountSettings.enableShortcuts;
+    shortcutsBottom = accountSettings.shortcutsBottom;
+    shortcutsCount = shortcuts.GetCount();
+    if (accountSettings.enableShortcuts) {
+        if (shortcutsBottom) {
+            if (shortcutsCount) {
+                if (
+                    shortcuts.GetCount() > _GLOBAL_SHORTCUTS_QTY / 2 || shortcuts.GetCount() > 6
+                    ) {
+                    heightAdd += 10 + (shortcutsCount + shortcutsCount % 2) * 25 / 2;
+                }
+                else {
+                    heightAdd += 10 + shortcutsCount * 25;
+                }
+            }
+        }
+        else {
+            widthAdd += 180;
+        }
+    }
+
     m_pages = new QStackedWidget(this);
-    // MySimpleSIP: Dialer, Calls e Contacts serão portados nas próximas etapas
     pageDialer = new Dialer(m_backend, m_pages);
     m_mainTab->addTab(TR(_T("Phone")));
     m_pages->addWidget(pageDialer);
@@ -194,6 +225,7 @@ void CmainDlg::OnInitDialog()
         }
     });
     QObject::connect(m_ButtonMenu, &QToolButton::clicked, this, [this] { MainPopupMenu(true); });
+    qApp->installEventFilter(this); // CBaseDialog::PreTranslateMessage
 
     // --- posição e tamanho (mesma regra do OnInitDialog original) ---
     // MySimpleSIP: no Wayland o compositor decide a posição; a regra vale no X11/XWayland.
@@ -205,8 +237,8 @@ void CmainDlg::OnInitDialog()
         if (r.Width() > 0)
             screenRect = QRect(r.left, r.top, r.Width(), r.Height());
     }
-    const int defW = DluX(_GLOBAL_WIDTH);
-    const int defH = DluY(_GLOBAL_HEIGHT + 31) + DluY(12);
+    const int defW = DluX(_GLOBAL_WIDTH) + widthAdd;
+    const int defH = DluY(_GLOBAL_HEIGHT + 31) + DluY(12) + heightAdd;
     int mW = accountSettings.mainW > 0 ? accountSettings.mainW : defW;
     int mH = accountSettings.mainH > 0 ? accountSettings.mainH : defH;
     int mx, my;
@@ -560,7 +592,7 @@ QMenu* CmainDlg::BuildMainMenu()
     }
     menu->addAction(TR(_T("Settings")) + QStringLiteral("\tCtrl+P"), this, [this] { OnMenuSettings(); });
     menu->addSeparator();
-    menu->addAction(TR(_T("Shortcuts")) + QStringLiteral("\tCtrl+S"), this, [this] { NotYetPorted(this, TR(_T("Shortcuts"))); });
+    menu->addAction(TR(_T("Shortcuts")) + QStringLiteral("\tCtrl+S"), this, [this] { OnMenuShortcuts(); });
 
     menu->addSeparator();
     QAction* top = menu->addAction(TR(_T("Always on Top")), this, [this] { OnMenuAlwaysOnTop(); });
@@ -1125,7 +1157,7 @@ void CmainDlg::Subscribe()
     }
     isSubscribed = true;
     pageContacts->PresenceSubscribe();
-    // MySimpleSIP: pageDialer->PresenceSubscribe (atalhos do discador) → Fase 6
+    pageDialer->PresenceSubscribe();
 }
 
 void CmainDlg::Unsubscribe()
@@ -1146,7 +1178,7 @@ void CmainDlg::Unsubscribe()
         }
     }
     pageContacts->PresenceReset();
-    // MySimpleSIP: pageDialer->PresenceReset (atalhos do discador) → Fase 6
+    pageDialer->PresenceReset();
     isSubscribed = false;
 }
 
@@ -1196,7 +1228,7 @@ LRESULT CmainDlg::onBuddyState(WPARAM wParam, LPARAM /*lParam*/)
             if (buddyNumber) {
                 //--
                 pageContacts->PresenceReceived(buddyNumber, image, ringing, &info);
-                // MySimpleSIP: pageDialer->PresenceReceived (atalhos do discador) → Fase 6
+                pageDialer->PresenceReceived(buddyNumber, image, ringing);
             }
         }
     }
@@ -1591,7 +1623,7 @@ LRESULT CmainDlg::onUsersDirectoryLoaded(WPARAM wParam, LPARAM /*lParam*/)
                 while (pos) {
                     Prensence prensence = prensences.GetNext(pos);
                     pageContacts->PresenceReceived(&prensence.number, prensence.image, prensence.ringing, &prensence.info, true);
-                    // MySimpleSIP: pageDialer->PresenceReceived (atalhos do discador) → Fase 6
+                    pageDialer->PresenceReceived(&prensence.number, prensence.image, prensence.ringing, true);
                 };
                 if (!sort && pageContacts->List()->header()->sortIndicatorSection() == 2) {
                     sort = true;
@@ -1788,6 +1820,209 @@ void CmainDlg::OnMenuSettings()
         settingsDlg->raise();
         settingsDlg->activateWindow();
     }
+}
+
+void CmainDlg::OnMenuShortcuts()
+{
+    if (!shortcutsDlg) {
+        shortcutsDlg = new ShortcutsDlg(this);
+    }
+    else {
+        shortcutsDlg->raise(); // SetForegroundWindow
+        shortcutsDlg->activateWindow();
+    }
+}
+
+void CmainDlg::OnMuteInput()
+{
+    pageDialer->OnBnClickedMuteInput();
+}
+
+void CmainDlg::OnMuteOutput()
+{
+    pageDialer->OnBnClickedMuteOutput();
+}
+
+void CmainDlg::ShortcutAction(Shortcut* shortcut, bool /*block*/, bool second)
+{
+    CString params;
+    CString number = second && !shortcut->number2.IsEmpty() ? shortcut->number2 : shortcut->number;
+    bool hasCalls = messagesDlg->GetCallsCount();
+    if (shortcut->type == MSIP_SHORTCUT_CALL_BT) {
+        shortcut->type = hasCalls ? MSIP_SHORTCUT_BT : MSIP_SHORTCUT_CALL;
+    }
+    if (shortcut->type == MSIP_SHORTCUT_CALL_AT) {
+        shortcut->type = hasCalls ? MSIP_SHORTCUT_AT : MSIP_SHORTCUT_CALL;
+    }
+    if (shortcut->type == MSIP_SHORTCUT_CALL_CONF) {
+        shortcut->type = hasCalls ? MSIP_SHORTCUT_CONF : MSIP_SHORTCUT_CALL;
+    }
+    if (shortcut->type == MSIP_SHORTCUT_CALL) {
+        if (shortcut->ringing && CommandCallPickup(number)) {
+        }
+        else {
+            MakeCall(number);
+        }
+    }
+    else if (shortcut->type == MSIP_SHORTCUT_VIDEOCALL) {
+#ifdef _GLOBAL_VIDEO
+        MakeCall(number, true);
+#else
+        MakeCall(number);
+#endif
+    }
+    else if (shortcut->type == MSIP_SHORTCUT_MESSAGE) {
+        MessagesOpen(number);
+    }
+    else if (shortcut->type == MSIP_SHORTCUT_DTMF) {
+        pageDialer->DTMF(number);
+    }
+    else if (shortcut->type == MSIP_SHORTCUT_BT) {
+        if (number.IsEmpty()) {
+            OpenTransferDlg(this, MSIP_ACTION_TRANSFER);
+        }
+        else {
+            messagesDlg->CallAction(MSIP_ACTION_TRANSFER, number);
+        }
+    }
+    else if (shortcut->type == MSIP_SHORTCUT_AT) {
+        if (number.IsEmpty()) {
+            OpenTransferDlg(this, MSIP_ACTION_ATTENDED_TRANSFER);
+        }
+        else {
+            messagesDlg->CallAction(MSIP_ACTION_ATTENDED_TRANSFER, number);
+        }
+    }
+    else if (shortcut->type == MSIP_SHORTCUT_CONF) {
+        if (number.IsEmpty()) {
+            OpenTransferDlg(this, MSIP_ACTION_INVITE);
+        }
+        else {
+            messagesDlg->CallAction(MSIP_ACTION_INVITE, number);
+        }
+    }
+}
+
+void CmainDlg::ShortcutsRemoveAll()
+{
+    for (int i = 0; i < shortcuts.GetCount(); i++) {
+        Shortcut* shortcut = &shortcuts.GetAt(i);
+        if (shortcut->presence) {
+            shortcut->presence = false;
+            CString number = shortcut->number;
+            UnsubscribeNumber(number);
+        }
+    }
+    shortcuts.RemoveAll();
+}
+
+bool msip_restart_requested = false;
+
+LRESULT CmainDlg::OnRestart(WPARAM, LPARAM)
+{
+    OnClose();
+    // MySimpleSIP: ShellExecute(accountSettings.exeFile) → relançado em main.cpp, depois que
+    // a instância atual libera o servidor de instância única
+    msip_restart_requested = true;
+    return TRUE;
+}
+
+bool CmainDlg::eventFilter(QObject* watched, QEvent* event)
+{
+    if (event->type() == QEvent::KeyPress && watched->isWidgetType() && !m_closing) {
+        QWidget* window = static_cast<QWidget*>(watched)->window();
+        bool baseDialog = window == this || window == messagesDlg;
+        for (int i = 0; !baseDialog && i < ringinDlgs.GetCount(); i++) {
+            baseDialog = window == ringinDlgs.GetAt(i);
+        }
+        if (baseDialog && PreTranslateKey(window, static_cast<QKeyEvent*>(event))) {
+            return true;
+        }
+    }
+    return QWidget::eventFilter(watched, event);
+}
+
+bool CmainDlg::PreTranslateKey(QWidget* window, QKeyEvent* event)
+{
+    bool catched = false;
+    const Qt::KeyboardModifiers mods = event->modifiers();
+    bool controlState = mods & Qt::ControlModifier;
+    bool altState = mods & Qt::AltModifier;
+    bool shiftState = mods & Qt::ShiftModifier;
+    const int key = event->key();
+    std::function<void()> postCommand;
+    if (controlState && !altState) {
+        if (key == Qt::Key_Tab || key == Qt::Key_Backtab) {
+            // MySimpleSIP: só na janela principal (no Windows, GetParent da janela de chamadas
+            // também devolve a principal, que fica escondida atrás dela)
+            if (window == this) {
+                if (!shiftState) {
+                    GotoTab(-1);
+                }
+                else {
+                    GotoTab(-2);
+                }
+                catched = true;
+            }
+        }
+        if (key == Qt::Key_M) {
+            postCommand = [this] { OnMenuAccountEdit(0); }; // ID_ACCOUNT_EDIT_RANGE
+        }
+        if (key == Qt::Key_L) {
+            postCommand = [this] { OnMenuAccountLocalEdit(); };
+        }
+        if (key == Qt::Key_P) {
+            postCommand = [this] { OnMenuSettings(); };
+        }
+        if (key == Qt::Key_S) {
+            postCommand = [this] { OnMenuShortcuts(); };
+        }
+        if (key == Qt::Key_Q) {
+            postCommand = [this] { OnMenuExit(); };
+        }
+        if (key == Qt::Key_QuoteLeft || key == Qt::Key_I) {
+            postCommand = [this] { OnMuteInput(); };
+        }
+        if (key == Qt::Key_O) {
+            postCommand = [this] { OnMuteOutput(); };
+        }
+        // MySimpleSIP: Ctrl+W (ID_MENU_WEBSITE) fica de fora enquanto "Visit Website" não tem
+        // endereço (item desabilitado no menu)
+    }
+    else {
+        if (key == Qt::Key_F2) {
+            //answer a call
+            msip_call_answer();
+            catched = true;
+        }
+        if (key == Qt::Key_F4) {
+            //hangup
+            msip_call_hangup_all();
+            catched = true;
+        }
+        if (key == Qt::Key_Escape) {
+            if (window == this && focusWidget() == m_ButtonMenu) {
+                TabFocusSet();
+                catched = true;
+            }
+        }
+        // WM_SYSKEYDOWN VK_F10: foco no botão de menu (ou de volta para a aba)
+        if (key == Qt::Key_F10 && !controlState && window == this) {
+            if (focusWidget() == m_ButtonMenu) {
+                TabFocusSet();
+            }
+            else {
+                m_ButtonMenu->setFocus();
+            }
+            catched = true;
+        }
+    }
+    if (postCommand) {
+        // PostMessage(WM_COMMAND): executa fora do tratamento da tecla
+        QTimer::singleShot(0, this, postCommand);
+        catched = true;
+    }
+    return catched;
 }
 
 LRESULT CmainDlg::OnRecreate(WPARAM, LPARAM)
@@ -2645,6 +2880,8 @@ LRESULT CmainDlg::WindowProc(UINT msg, WPARAM wParam, LPARAM lParam)
         return onBuddyState(wParam, lParam);
     case UM_USERS_DIRECTORY:
         return onUsersDirectoryLoaded(wParam, lParam);
+    case UM_RESTART:
+        return OnRestart(wParam, lParam);
     case WM_TIMER:
         OnTimer(wParam);
         return 0;

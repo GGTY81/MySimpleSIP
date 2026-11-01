@@ -14,6 +14,7 @@ add_library(msip_ui STATIC
     SettingsDlg.cpp
     AAOptionsDlg.cpp
     FeatureCodesDlg.cpp
+    ShortcutsDlg.cpp
     RinginDlg.cpp
 )
 target_include_directories(msip_ui PUBLIC
