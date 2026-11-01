@@ -27,6 +27,8 @@
 #include "SystemMonitors.h"
 #include "MediaKeys.h"
 #include "Hid.h"
+#include "Preview.h"
+#include "VideoWindow.h"
 
 #include <json/json.h>
 #include "CoreHost.h"
@@ -2127,6 +2129,20 @@ LRESULT CmainDlg::onMWIInfo(WPARAM wParam, LPARAM /*lParam*/)
     bool hasMail = (bool)wParam;
     pageDialer->UpdateVoicemailButton(hasMail);
     return 0;
+}
+
+void CmainDlg::createPreviewWin()
+{
+    if (!previewWin) {
+        previewWin = new Preview(this);
+    }
+    previewWin->Start(VideoCaptureDeviceId());
+}
+
+void CmainDlg::InstallVideoRenderer()
+{
+    // MySimpleSIP: renderizador do pjmedia com janelas Qt (VideoWindow) no lugar do SDL
+    msip_qt_video_install();
 }
 
 bool CmainDlg::CommandCallAnswer() {

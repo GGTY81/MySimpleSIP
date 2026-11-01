@@ -275,6 +275,8 @@ void CmainDlgCore::PJCreateRaw()
     if (!nullSoundDevice) {
         msip_pulse_audio_install();
     }
+    // MySimpleSIP: janelas de vídeo da interface (Qt) no lugar das do SDL
+    InstallVideoRenderer();
 
     // Set snd devices
     UpdateSoundDevicesIds();

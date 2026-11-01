@@ -136,7 +136,19 @@ Com o fone, tirar do gancho (botão de atender) atende a chamada que toca ou dis
 digitado, pôr no gancho desliga, e o botão de mudo e as luzes de toque, chamada e mudo
 seguem o aplicativo.
 
-## 7. Linha de comando
+## 7. Vídeo
+
+Em menu → **Configurações**, escolha a câmera em **Câmera** e use **P** (Visualizar) para
+abrir a prévia ("Vídeo local"). Para uma videochamada, use o botão de vídeo do discador
+(ou **Chamada de vídeo** no menu dos contatos e do histórico), ou **Atender com Vídeo** na janela de
+chamada recebida. O vídeo de quem está do outro lado abre numa janela própria, que pode ser
+redimensionada; fechá-la só a esconde, sem desligar a chamada. A prévia da câmera fecha
+sozinha ao fim da última chamada.
+
+Se a câmera não aparecer, confira se ela funciona em outro programa (ex.: o aplicativo
+*Câmera* do Ubuntu) e se nenhum outro programa a está usando.
+
+## 8. Linha de comando
 
 Os mesmos comandos do MicroSIP funcionam no terminal (ou em atalhos de teclado do GNOME).
 Com o MySimpleSIP já aberto, o comando é repassado para ele:

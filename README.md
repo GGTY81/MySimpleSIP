@@ -10,7 +10,7 @@
 
 <p align="center"><img src="docs/layout/janela-principal-0.5.2.png" alt="Janela principal do MySimpleSIP: discador" width="243"></p>
 
-> **Situação: versão de desenvolvimento (0.7.x).** O aplicativo já é usado em chamadas reais,
+> **Situação: versão de desenvolvimento (0.8.x).** O aplicativo já é usado em chamadas reais,
 > mas ainda não chegou à versão estável 1.0.0. Até lá não há pacote pronto: a instalação é
 > pela compilação do código-fonte (≈ 10 minutos, passo a passo abaixo). Na 1.0.0 será
 > publicado um pacote `.deb` na página de [Releases](https://github.com/GGTY81/MySimpleSIP/releases).
@@ -24,6 +24,8 @@
 - Chamadas de saída e de entrada; janela de chamada recebida (Atender, Atender com vídeo,
   Recusar, Desviar); várias chamadas simultâneas em abas; espera, mudo, atendimento
   automático, não perturbe, encaminhamento, recusa de chamadas.
+- Videochamadas (H.264, H.263, VP8, VP9) com a câmera do computador: vídeo remoto em
+  janela própria, prévia da câmera ("Vídeo local") e escolha da câmera nas Configurações.
 - Transferência cega e assistida, conferência (mesclar/separar), captura de chamada e
   códigos de função do PBX.
 - Gravação de chamadas em MP3 ou WAV (manual ou automática).
@@ -50,7 +52,8 @@
 
 **Em andamento** (veja o [plano](docs/ANALISE_E_PLANO.md))
 
-- Vídeo — Fase 8. Pacote `.deb` e Release — Fase 9 (versão 1.0.0).
+- Polimento e pacote `.deb` — Fase 9; comparação lado a lado com o MicroSIP e Release
+  1.0.0 — Fase 10.
 
 ## Instalação no Ubuntu 26.04
 

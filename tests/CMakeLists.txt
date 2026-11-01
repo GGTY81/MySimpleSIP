@@ -72,6 +72,7 @@ qt_add_executable(test_ui
     ui/test_command_line.cpp
     ui/test_system_monitors.cpp
     ui/test_headset.cpp
+    ui/test_video.cpp
     "${PROJECT_SOURCE_DIR}/resources/resources.qrc"
     "${PROJECT_SOURCE_DIR}/resources/layout.qrc"
 )

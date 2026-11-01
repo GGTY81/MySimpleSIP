@@ -63,12 +63,16 @@ tela sai sempre no tema claro; para ver o tema escuro, rode na sessão gráfica 
 `--minimized` (a janela fica escondida). Como o `XDG_CONFIG_HOME` temporário esconde o dconf
 do GTK, copie `~/.config/dconf/user` para `$T/c/dconf/user` antes e apague a cópia depois.
 
+O vídeo é testado com o gerador de barras de cor do pjmedia no lugar da câmera
+(`tests/ui/test_video.cpp`: prévia e, com `MSIP_TEST_SIP=1`, videochamada com a CLI).
+
 O fone HID e as teclas de mídia são testados com um fone falso (`HidIo`, em
 `tests/ui/test_headset.cpp`) e com o próprio barramento D-Bus da sessão (player MPRIS).
 
 A CLI de teste do núcleo (`build/src/cli/msip-cli`) faz chamadas sem interface — veja o
-comentário no topo de `src/cli/msip_cli.cpp` (comandos `call`, `answer`, `hangup`, `hold`,
-`dtmf`, `message`, `online`, `devices`, `status`, `wait`, `quit`).
+comentário no topo de `src/cli/msip_cli.cpp` (comandos `call`, `videocall`, `video`, `answer`,
+`hangup`, `hold`, `dtmf`, `message`, `online`, `devices`, `status`, `wait`, `quit`; com
+`--video`, vídeo pelo gerador de barras de cor do pjmedia, nunca pela câmera).
 
 ## Estrutura
 
@@ -81,7 +85,7 @@ comentário no topo de `src/cli/msip_cli.cpp` (comandos `call`, `answer`, `hangu
 | `src/core/` | Núcleo de telefonia: `global.cpp`, `MSIP.cpp`, parte pjsua do `CmainDlg`, callbacks, HTTP, MP3, backend PulseAudio, leitor de descritor HID (`HidParser`, no lugar do `hid.dll`). |
 | `src/data/`, `src/service/`, `src/domain/`, `src/utils/` | Histórico (SQLite), contatos, CSV, XML (`CMarkup` próprio). |
 | `src/app/` | Integração Qt: fila de mensagens, chaveiro, monitores do sistema (rede, energia, ociosidade), teclas de mídia (player MPRIS). |
-| `src/ui/` | Janelas Qt: principal, discador, chamadas, chamada recebida, histórico, contatos, configurações e diálogos. |
+| `src/ui/` | Janelas Qt: principal, discador, chamadas, chamada recebida, histórico, contatos, configurações e diálogos; renderizador de vídeo do pjmedia em janelas Qt (`VideoWindow`) e prévia da câmera (`Preview`). |
 | `src/cli/` | `msip-cli`, CLI de teste do núcleo. |
 | `src/tools/` | `mysimplesip-hid-check`, verificador usado pela regra do udev dos fones HID (`resources/udev/`, `scripts/install-hid-rules.sh`). |
 | `resources/` | Ícones, bitmaps, sons e langpacks (gerados por `scripts/convert-resources.py`). |

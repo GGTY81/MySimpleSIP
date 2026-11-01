@@ -13,13 +13,16 @@
 // (imprimem eventos e liberam memória); os completos virão com a janela (Fase 3).
 //
 // Uso:
-//   msip-cli [--profile DIR] [--null-audio] [--auto-answer] [--script ARQ] [--log]
+//   msip-cli [--profile DIR] [--null-audio] [--auto-answer] [--video] [--script ARQ] [--log]
+//   --video       : vídeo com o gerador de barras de cor do pjmedia (nunca a câmera); atende
+//                   com vídeo quando a chamada oferece vídeo
 //   --profile DIR : usa DIR como XDG_CONFIG/DATA/STATE (perfil isolado para testes)
 //   --script ARQ  : executa comandos do arquivo (um por linha) em vez do stdin
 // Comandos: call <número> | answer | hangup | hold | unhold | dtmf <dígitos> |
 //           online (publica presença "online" em todas as contas — PublishStatus) |
-//           devices (lista os dispositivos de áudio e os padrões) |
+//           devices (lista os dispositivos de áudio e de vídeo e os padrões de áudio) |
 //           message <número> <texto> (envia mensagem SIP — pjsua_im_send) |
+//           videocall <número> (chamada com vídeo) | video (estado do vídeo das chamadas) |
 //           status | wait <segundos> | quit
 
 #include "mainDlgCore.h"
@@ -73,6 +76,7 @@ const char* mediaStatusText(pjsua_call_media_status st)
 class CliMainDlg : public CmainDlgCore, public IMessageTarget {
 public:
     bool autoAnswerAll = false;
+    bool video = false;
 
     LRESULT WindowProc(UINT msg, WPARAM wParam, LPARAM lParam) override
     {
@@ -95,7 +99,11 @@ public:
             }
             if (answer) {
                 out("[entrada] atendendo automaticamente");
-                msip_call_answer(ci->id);
+                if (video) {
+                    PostMessage(UM_CALL_ANSWER, ci->id, ci->rem_vid_cnt); // com vídeo, como o RinginDlg
+                } else {
+                    msip_call_answer(ci->id);
+                }
             }
             delete ci;
             break;
@@ -176,7 +184,7 @@ public:
             out("[status] %s", utf8(text).GetString());
     }
 
-    void Call(const CString& number)
+    void Call(const CString& number, bool withVideo = false)
     {
         CString n = number;
         CString commands;
@@ -192,7 +200,7 @@ public:
         msip_msg_data_init(pool, acc, msgData);
         pjsua_call_setting setting;
         pjsua_call_setting_default(&setting);
-        setting.vid_cnt = 0;
+        setting.vid_cnt = withVideo ? 1 : 0;
         pjsua_call_id callId;
         call_user_data* ud = new call_user_data(PJSUA_INVALID_ID);
         ud->commands = commands;
@@ -284,6 +292,32 @@ private:
         out("> %s", line.toUtf8().constData());
         if (cmd == QLatin1String("call")) {
             m_dlg.Call(carg);
+        } else if (cmd == QLatin1String("videocall")) {
+            m_dlg.Call(carg, true);
+        } else if (cmd == QLatin1String("video")) {
+            pjsua_call_id ids[PJSUA_MAX_CALLS];
+            unsigned count = PJSUA_MAX_CALLS;
+            pjsua_enum_calls(ids, &count);
+            for (unsigned i = 0; i < count; i++) {
+                pjsua_call_info ci;
+                if (pjsua_call_get_info(ids[i], &ci) != PJ_SUCCESS)
+                    continue;
+                for (unsigned m = 0; m < ci.media_cnt; m++) {
+                    if (ci.media[m].type != PJMEDIA_TYPE_VIDEO)
+                        continue;
+                    pjsua_vid_win_info wi;
+                    const pjsua_vid_win_id wid = ci.media[m].stream.vid.win_in;
+                    const bool win = wid != PJSUA_INVALID_ID && pjsua_vid_win_get_info(wid, &wi) == PJ_SUCCESS;
+                    pjsua_stream_stat stat;
+                    unsigned rx = 0, tx = 0;
+                    if (pjsua_call_get_stream_stat(ids[i], m, &stat) == PJ_SUCCESS) {
+                        rx = stat.rtcp.rx.pkt;
+                        tx = stat.rtcp.tx.pkt;
+                    }
+                    out("[vídeo] chamada %d: estado %d, direção %d, recebido %u, enviado %u, janela %s", ids[i],
+                        (int) ci.media[m].status, (int) ci.media[m].dir, rx, tx, win ? "sim" : "não");
+                }
+            }
         } else if (cmd == QLatin1String("message")) {
             const QString number = arg.section(QLatin1Char(' '), 0, 0);
             const QString text = arg.section(QLatin1Char(' '), 1);
@@ -300,6 +334,13 @@ private:
                 out("[áudio] saída padrão: %s", def.name);
             if (pjmedia_aud_dev_get_info(PJMEDIA_AUD_DEFAULT_CAPTURE_DEV, &def) == PJ_SUCCESS)
                 out("[áudio] entrada padrão: %s", def.name);
+            pjmedia_vid_dev_info vinfo[PJMEDIA_VID_DEV_MAX_DEVS];
+            unsigned vcount = PJMEDIA_VID_DEV_MAX_DEVS;
+            if (pjsua_vid_enum_devs(vinfo, &vcount) == PJ_SUCCESS) {
+                for (unsigned i = 0; i < vcount; i++)
+                    out("[vídeo] %d: %s (%s, %s, %u formatos)", vinfo[i].id, vinfo[i].name, vinfo[i].driver,
+                        vinfo[i].dir == PJMEDIA_DIR_CAPTURE ? "captura" : "renderização", vinfo[i].fmt_cnt);
+            }
         } else if (cmd == QLatin1String("online")) {
             m_dlg.PublishStatus(true);
         } else if (cmd == QLatin1String("answer")) {
@@ -329,7 +370,8 @@ private:
                 Next();
             });
         } else if (cmd == QLatin1String("quit")) {
-            QCoreApplication::quit();
+            // enfileirado: antes do app.exec() o quit() direto seria ignorado
+            QMetaObject::invokeMethod(qApp, &QCoreApplication::quit, Qt::QueuedConnection);
         } else {
             out("[erro] comando desconhecido: %s", cmd.toUtf8().constData());
         }
@@ -357,7 +399,8 @@ int main(int argc, char* argv[])
     QCommandLineOption autoAnswer(QStringLiteral("auto-answer"), QStringLiteral("Atende todas as chamadas."));
     QCommandLineOption script(QStringLiteral("script"), QStringLiteral("Arquivo de comandos."), QStringLiteral("arquivo"));
     QCommandLineOption log(QStringLiteral("log"), QStringLiteral("Mostra o log do pjsip no terminal."));
-    parser.addOptions({profile, nullAudio, autoAnswer, script, log});
+    QCommandLineOption video(QStringLiteral("video"), QStringLiteral("Vídeo com o gerador de barras de cor (atende com vídeo)."));
+    parser.addOptions({profile, nullAudio, autoAnswer, script, log, video});
     parser.process(app);
 
     if (parser.isSet(profile)) {
@@ -381,6 +424,13 @@ int main(int argc, char* argv[])
     dlg.nullSoundDevice = parser.isSet(nullAudio);
 
     accountSettings.Init();
+    dlg.video = parser.isSet(video);
+    if (dlg.video) {
+        // nunca a câmera da máquina; janelas do SDL sem tela (renderizador do pjmedia)
+        accountSettings.videoCaptureDevice = _T("Colorbar generator");
+        accountSettings.disableVideo = false;
+        setenv("SDL_VIDEODRIVER", "dummy", 1);
+    }
     out("[init] %s %s; INI %s; conta %d", MYSIMPLESIP_NAME, MYSIMPLESIP_VERSION,
         utf8(accountSettings.iniFile).GetString(), accountSettings.accountId);
 

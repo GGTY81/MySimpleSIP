@@ -90,6 +90,7 @@ public:
     virtual void Unsubscribe() {}
     virtual void onPlayerStop() { PlayerStop(); }           // CmainDlg::onPlayerStop
     virtual void createPreviewWin() {}                      // preview de vídeo local
+    virtual void InstallVideoRenderer() {}                  // MySimpleSIP: renderizador de vídeo da interface
     virtual bool IsForegroundApp() { return true; }         // janela do app em primeiro plano?
     virtual void RestoreWindow() {}                         // mostrar/trazer a janela principal
     // Nome a exibir para a chamada (contatos/diretório); padrão: nome da URI ou usuário

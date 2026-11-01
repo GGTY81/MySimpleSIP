@@ -20,6 +20,8 @@ add_library(msip_ui STATIC
     ImportDlg.cpp
     RinginDlg.cpp
     Hid.cpp
+    Preview.cpp
+    VideoWindow.cpp
 )
 target_include_directories(msip_ui PUBLIC
     "${CMAKE_CURRENT_SOURCE_DIR}"

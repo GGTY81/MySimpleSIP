@@ -23,6 +23,7 @@
 #include "UiCommon.h"
 #include "langpack.h"
 #include "mainDlg.h"
+#include "Preview.h"
 
 #include <QApplication>
 #include <QCloseEvent>
@@ -1033,6 +1034,11 @@ void MessagesDlg::OnEndCall(pjsua_call_info* call_info, call_user_data* user_dat
     }
     MainDlg()->pageDialer->SetName();
 
+#ifdef _GLOBAL_VIDEO
+    if (MainDlg()->previewWin && !GetCallsCount()) {
+        MainDlg()->previewWin->OnClose(); // MySimpleSIP: PostMessage(WM_CLOSE)
+    }
+#endif
     MainDlg()->UpdateWindowText(_T("-"));
 
     if (call_info->state == PJSIP_INV_STATE_DISCONNECTED && call_info->last_status != 200) {

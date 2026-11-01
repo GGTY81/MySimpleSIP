@@ -44,6 +44,7 @@ class QKeyEvent;
 class NetworkMonitor;
 class PowerMonitor;
 class MediaKeys;
+class Preview;
 class QMessageBox;
 class QLabel;
 class QMenu;
@@ -111,6 +112,9 @@ public:
     bool CommandCallPickup(CString number);
     // teclas de mídia (HSHELL_APPCOMMAND no Windows; aqui vindas do player MPRIS)
     LRESULT onShellHookMessage(WPARAM wParam, LPARAM lParam);
+    // vídeo
+    void createPreviewWin() override;
+    void InstallVideoRenderer() override;
     LRESULT onRefreshLevels(WPARAM wParam, LPARAM lParam);
     LRESULT onCallState(WPARAM wParam, LPARAM lParam);
     LRESULT onCallMediaState(WPARAM wParam, LPARAM lParam);
@@ -182,6 +186,7 @@ public:
     PowerMonitor* m_powerMonitor = nullptr;     // vive com a janela (WM_POWERBROADCAST)
     NetworkMonitor* m_networkMonitor = nullptr; // entre PJCreate e PJDestroy
     MediaKeys* m_mediaKeys = nullptr;           // vive com a janela (gancho de shell)
+    Preview* previewWin = nullptr;              // prévia da câmera (Vídeo local)
     bool missed = false;
 
 protected:

@@ -20,6 +20,7 @@
 #include "Dialer.h"
 #include "FeatureCodesDlg.h"
 #include "MessagesDlg.h"
+#include "Preview.h"
 #include "PulseAudioDev.h"
 #include "UiCommon.h"
 #include "langpack.h"
@@ -891,6 +892,10 @@ void SettingsDlg::OnNMClickSyslinkFeatureCodes()
 
 void SettingsDlg::OnBnClickedPreview()
 {
-    // MySimpleSIP: prévia da câmera (Preview/createPreviewWin) → Fase 8 (vídeo)
-    NotYetPorted(this, TR(_T("Preview")));
+    QComboBox* combobox = m_layout.Combo(QStringLiteral("IDC_SETTINGS_VID_CAP_DEV"));
+    CString name = CS(combobox->currentText());
+    if (!MainDlg()->previewWin) {
+        MainDlg()->previewWin = new Preview(MainDlg());
+    }
+    MainDlg()->previewWin->Start(MainDlg()->VideoCaptureDeviceId(name));
 }
