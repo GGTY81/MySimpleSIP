@@ -23,6 +23,8 @@
 #include "ContactsService.h"
 #include "Markup.h"
 #include "Mp3Encode.h"
+#include "PulseAudioDev.h"
+#include "SystemMonitors.h"
 
 #include <json/json.h>
 #include "CoreHost.h"
@@ -39,6 +41,7 @@
 
 #include <QApplication>
 #include <QClipboard>
+#include <QDateTime>
 #include <QDir>
 #include <QFileDialog>
 #include <QHeaderView>
@@ -66,6 +69,8 @@
 
 #include <chrono>
 #include <functional>
+
+#define THIS_FILENAME "mainDlg.cpp"
 #include <condition_variable>
 #include <mutex>
 #include <thread>
@@ -229,6 +234,11 @@ void CmainDlg::OnInitDialog()
     });
     QObject::connect(m_ButtonMenu, &QToolButton::clicked, this, [this] { MainPopupMenu(true); });
     qApp->installEventFilter(this); // CBaseDialog::PreTranslateMessage
+
+    // ON_WM_POWERBROADCAST: suspender encerra o pjsua; ao voltar, recria a sessão
+    m_powerMonitor = new PowerMonitor(this);
+    QObject::connect(m_powerMonitor, &PowerMonitor::aboutToSleep, this, [this] { OnPowerBroadcast(PBT_APMSUSPEND, 0); });
+    QObject::connect(m_powerMonitor, &PowerMonitor::resumed, this, [this] { OnPowerBroadcast(PBT_APMRESUMEAUTOMATIC, 0); });
 
     // --- posição e tamanho (mesma regra do OnInitDialog original) ---
     // MySimpleSIP: no Wayland o compositor decide a posição; a regra vale no X11/XWayland.
@@ -2524,7 +2534,11 @@ LRESULT CmainDlg::onCallState(WPARAM wParam, LPARAM lParam)
     if (pageDialer->m_ButtonRec) {
         pageDialer->m_ButtonRec->setEnabled(hasCalls);
     }
-    // MySimpleSIP: Hid::SetOffhookRing e SetThreadExecutionState (impedir suspensão) → Fase 7
+    // SetThreadExecutionState(ES_SYSTEM_REQUIRED | ES_DISPLAY_REQUIRED...) durante as chamadas
+    if (m_powerMonitor) {
+        m_powerMonitor->setCallActive(hasCalls);
+    }
+    // MySimpleSIP: Hid::SetOffhookRing → Fase 7 (fone HID)
     statistics.postCallState9 = 1;
     return 0;
 }
@@ -2847,8 +2861,75 @@ void CmainDlg::OnTimerCall()
 
 void CmainDlg::OnTimer(UINT_PTR TimerVal)
 {
-    // MySimpleSIP: IDT_TIMER_NETWORK_CHANGED, IDT_TIMER_SWITCH_DEVICES, IDT_TIMER_IDLE e
-    // IDT_TIMER_VERSION chegam com os monitores de sistema (Fase 7)
+    // MySimpleSIP: IDT_TIMER_VERSION (verificação de atualizações) depende do servidor de
+    // atualizações do projeto (decisão pendente)
+    if (TimerVal == IDT_TIMER_NETWORK_CHANGED) {
+        KillTimer(IDT_TIMER_NETWORK_CHANGED);
+        OnTimerNetworkChange();
+        return;
+    }
+    if (TimerVal == IDT_TIMER_SWITCH_DEVICES) {
+        KillTimer(IDT_TIMER_SWITCH_DEVICES);
+        if (is_pjsua_running()) {
+            statistics.winAudioChanged++;
+            statistics.winAudioChangedTime = CTime::GetCurrentTime().GetTime();
+            PJ_LOG(3, (THIS_FILENAME, "Execute refresh devices"));
+            bool is_active = msip_snd_is_active();
+            bool is_ring = false;
+            if (is_active) {
+                int in, out;
+                if (pjsua_get_snd_dev(&in, &out) == PJ_SUCCESS) {
+                    is_ring = (out == msip_audio_ring);
+                }
+                else {
+                    is_ring = false;
+                }
+                pjsua_set_null_snd_dev();
+            }
+            pjmedia_aud_dev_refresh();
+            UpdateSoundDevicesIds();
+            if (is_active) {
+                msip_set_sound_device(is_ring ? msip_audio_ring : msip_audio_output, true);
+            }
+#ifdef _GLOBAL_VIDEO
+            if (!accountSettings.disableVideo) {
+                pjmedia_vid_subsys* vid_subsys = pjmedia_get_vid_subsys();
+                if (vid_subsys->init_count) {
+                    videoUsedTime = CTime::GetCurrentTime().GetTime();
+                    pjmedia_vid_dev_refresh();
+                }
+            }
+#endif
+            // MySimpleSIP: Hid::OpenDevice (headsetSupport) → Fase 7 (fone HID)
+        }
+        return;
+    }
+    if (TimerVal == IDT_TIMER_IDLE) {
+        if (is_pjsua_running() && m_PresenceStatus != PJRPID_ACTIVITY_BUSY) {
+            //--
+            // MySimpleSIP: GetLastInputInfo → instante da última entrada = agora − ociosidade
+            // da sessão (org.gnome.Mutter.IdleMonitor), em segundos para não oscilar
+            const qint64 idle = SessionIdleTimeMs();
+            if (idle >= 0) {
+                const qint64 lastInput = (QDateTime::currentMSecsSinceEpoch() - idle) / 1000;
+                if (m_lastInputTime < 0 || qAbs(lastInput - m_lastInputTime) > 1) {
+                    m_lastInputTime = lastInput;
+                    m_idleCounter = 0;
+                    if (m_PresenceStatus == PJRPID_ACTIVITY_AWAY) {
+                        PublishStatus();
+                    }
+                }
+                else {
+                    m_idleCounter++;
+                    if (m_idleCounter == 120) {
+                        PublishStatus(false);
+                    }
+                }
+            }
+            //--
+        }
+        return;
+    }
     if (TimerVal == IDT_TIMER_AUTOANSWER) {
         KillTimer(IDT_TIMER_AUTOANSWER);
         if (autoAnswerTimerCallId != PJSUA_INVALID_ID) {
@@ -2896,6 +2977,140 @@ void CmainDlg::OnInstanceMessage(const QString& line)
     else {
         onTrayNotify(0, 0); // mostrar e trazer para a frente
     }
+}
+
+void CmainDlg::PlatformMonitorsStart()
+{
+    // NotifyUnicastIpAddressChange/NotifyRouteChange2 → netlink
+    delete m_networkMonitor;
+    m_networkMonitor = new NetworkMonitor(this);
+    QObject::connect(m_networkMonitor, &NetworkMonitor::changed, this, [this] { PostMessage(UM_NETWORK_CHANGE, 0, 0); });
+    // CMMNotificationClient → eventos do PulseAudio (com o backend ALSA não há aviso)
+    if (msip_pulse_audio_active()) {
+        msip_pulse_audio_monitor_start([](void* data) {
+            static_cast<CmainDlg*>(data)->PostMessage(WM_DEVICECHANGE, DBT_DEVNODES_CHANGED, 1);
+        }, this);
+    }
+}
+
+void CmainDlg::PlatformMonitorsStop()
+{
+    msip_pulse_audio_monitor_stop();
+    delete m_networkMonitor;
+    m_networkMonitor = nullptr;
+}
+
+LRESULT CmainDlg::OnNetworkChange(WPARAM wParam, LPARAM lParam)
+{
+    KillTimer(IDT_TIMER_NETWORK_CHANGED);
+    if (is_pjsua_running()) {
+        PJ_LOG(3, (THIS_FILENAME, "UM_NETWORK_CHANGE(%d,%d)", (int)wParam, (int)lParam));
+        SetTimer(IDT_TIMER_NETWORK_CHANGED, 1000, 0);
+    }
+    return 0;
+}
+
+void CmainDlg::OnTimerNetworkChange()
+{
+    statistics.winNetworkChanged++;
+    statistics.winNetworkChangedTime = CTime::GetCurrentTime().GetTime();
+    if (!is_pjsua_running()) {
+        return;
+    }
+    statistics.winNetworkChanged0++;
+    if (!MSIP::IsConnectedToNetworkCOM()) {
+        return;
+    }
+    if (!is_pjsua_running()) {
+        return;
+    }
+    //--
+    if (!MSIP::IsNetworkChanged()) {
+        return;
+    }
+    //--
+    statistics.winNetworkChanged1++;
+    MSIP::PortKnock();
+    if (accountSettings.networkChanges) {
+        statistics.winNetworkChanged2++;
+        //PJ_LOG(3, (THIS_FILENAME, "NETWORK CHANGED, update transports, accounts and calls"));
+        pjsua_ip_change_param param;
+        pjsua_ip_change_param_default(&param);
+        statistics.winNetworkChangedThreadId = (int)pj_getpid(); // MySimpleSIP: GetCurrentThreadId
+        auto status = pjsua_handle_ip_change(&param);
+        if (status == PJ_SUCCESS) {
+            statistics.winNetworkChanged3++;
+            statistics.winNetworkChangedTimeSuccess = CTime::GetCurrentTime().GetTime();
+            pjsua_acc_id ids[PJSUA_MAX_ACC];
+            unsigned count = PJSUA_MAX_ACC;
+            if (pjsua_enum_accs(ids, &count) == PJ_SUCCESS) {
+                for (unsigned i = 0; i < count; i++) {
+                    pj_pool_t* tmp_pool = pjsua_pool_create("msip_ipch", 256, 256);
+                    if (!tmp_pool) continue;
+                    pjsua_acc_config acc_cfg;
+                    pjsua_acc_config_default(&acc_cfg);
+                    if (pjsua_acc_get_config(ids[i], tmp_pool, &acc_cfg) == PJ_SUCCESS) {
+                        if (acc_cfg.rtp_cfg.public_addr.slen > 0) {
+                            // update public address for account
+                            Account accountTmp;
+                            accountTmp.publicAddr = MSIP::PjToStr(&acc_cfg.rtp_cfg.public_addr);
+                            CStringA str = CStringA(get_public_addr(&accountTmp));
+                            pj_str_t new_pub_addr = pj_str((char*)str.GetString());
+                            if (pj_strcmp(&acc_cfg.rtp_cfg.public_addr, &new_pub_addr) != 0) {
+                                pj_strdup(tmp_pool, &acc_cfg.rtp_cfg.public_addr, &new_pub_addr);
+                                pjsua_acc_modify(ids[i], &acc_cfg);
+                            }
+                        }
+                    }
+                    pj_pool_release(tmp_pool);
+                    if (!acc_cfg.allow_contact_rewrite) {
+                        // re-register even if allow_contact_rewrite is disabled
+                        pjsua_acc_info info;
+                        pjsua_acc_get_info(ids[i], &info);
+                        if (info.has_registration) {
+                            pjsua_acc_update_contact_on_ip_change(&pjsua_var.acc[ids[i]]);
+                        }
+                    }
+                }
+            }
+        }
+        else {
+            // !! restart pjsip if we got here?
+            statistics.winNetworkChanged4++;
+            statistics.winNetworkChangedTimeError = CTime::GetCurrentTime().GetTime();
+            statistics.winNetworkChanged4Error = status;
+        }
+    }
+}
+
+UINT CmainDlg::OnPowerBroadcast(UINT nPowerEvent, LPARAM)
+{
+    if (nPowerEvent == PBT_APMRESUMEAUTOMATIC) {
+        statistics.winPowerBroadcastResume++;
+        statistics.winPowerBroadcastResumeTime = CTime::GetCurrentTime().GetTime();
+        PostMessage(UM_RECREATE, 0, 0);  // Callbacks must be processed before a new session starts
+    }
+    else if (nPowerEvent == PBT_APMSUSPEND) {
+        statistics.winPowerBroadcastSuspend++;
+        statistics.winPowerBroadcastSuspendTime = CTime::GetCurrentTime().GetTime();
+        if (is_pjsua_running()) {
+            PJ_LOG(3, (THIS_FILENAME, "WM_POWERBROADCAST received"));
+            PJDestroy();
+        }
+    }
+    return TRUE;
+}
+
+BOOL CmainDlg::OnDeviceChange(UINT nEventType, DWORD_PTR)
+{
+    if (nEventType == DBT_DEVNODES_CHANGED) {
+        KillTimer(IDT_TIMER_SWITCH_DEVICES);
+        if (is_pjsua_running()) {
+            PJ_LOG(3, (THIS_FILENAME, "WM_DEVICECHANGE"));
+            SetTimer(IDT_TIMER_SWITCH_DEVICES, 1500, NULL);
+        }
+    }
+    return TRUE;
 }
 
 LRESULT CmainDlg::onCommandLine(WPARAM, LPARAM lParam)
@@ -3213,6 +3428,12 @@ LRESULT CmainDlg::WindowProc(UINT msg, WPARAM wParam, LPARAM lParam)
         return onUsersDirectoryLoaded(wParam, lParam);
     case UM_RESTART:
         return OnRestart(wParam, lParam);
+    case UM_NETWORK_CHANGE:
+        return OnNetworkChange(wParam, lParam);
+    case UM_RECREATE:
+        return OnRecreate(wParam, lParam);
+    case WM_DEVICECHANGE:
+        return OnDeviceChange(wParam, lParam);
     case UM_ON_COMMAND_LINE:
         return onCommandLine(wParam, lParam);
     case UM_ON_PAGER:

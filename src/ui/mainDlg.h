@@ -41,6 +41,8 @@ class ExportDlg;
 class ImportDlg;
 class Shortcut;
 class QKeyEvent;
+class NetworkMonitor;
+class PowerMonitor;
 class QMessageBox;
 class QLabel;
 class QMenu;
@@ -65,6 +67,8 @@ public:
     void OnAccount(WPARAM wParam, LPARAM lParam) override;
     void InitUI() override;
     bool AskRetryNetwork() override;
+    void PlatformMonitorsStart() override;
+    void PlatformMonitorsStop() override;
     bool IsForegroundApp() override;
     void RestoreWindow() override;
     HWND DialerHwnd() override;
@@ -112,6 +116,11 @@ public:
     bool AutoAnswer(pjsua_call_id call_id, bool force = false);
     CString GetNameForCall(SIPURI& sipuri, call_user_data* user_data, const CString& numberOriginal = L"") override;
     void OnTimer(UINT_PTR TimerVal);
+    // monitores do sistema (rede, energia, dispositivos de áudio)
+    LRESULT OnNetworkChange(WPARAM wParam, LPARAM lParam);
+    void OnTimerNetworkChange();
+    UINT OnPowerBroadcast(UINT nPowerEvent, LPARAM nEventData);
+    BOOL OnDeviceChange(UINT nEventType, DWORD_PTR dwData);
     void OnTimerCall();
     BOOL CopyStringToClipboard(const CString& str);
     // presença/BLF e diretório de usuários
@@ -165,6 +174,8 @@ public:
     CArray<RinginDlg*> ringinDlgs;
     bool m_startMinimized = false;
     CString dialNumberDelayed; // número da linha de comando à espera do registro
+    PowerMonitor* m_powerMonitor = nullptr;     // vive com a janela (WM_POWERBROADCAST)
+    NetworkMonitor* m_networkMonitor = nullptr; // entre PJCreate e PJDestroy
     bool missed = false;
 
 protected:
@@ -195,6 +206,8 @@ private:
     int m_trayState = -1; // 0 inativo, 1 normal, 2 perdida
     bool m_created = false;
     bool m_closing = false;
+    int m_idleCounter = 0;
+    qint64 m_lastInputTime = -1; // GetLastInputInfo (s desde a época, pela ociosidade da sessão)
 };
 
 // MySimpleSIP: OnRestart pede o reinício; main.cpp relança o executável depois de liberar o

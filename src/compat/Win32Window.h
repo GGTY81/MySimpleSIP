@@ -26,6 +26,7 @@ using WPARAM = std::uintptr_t;
 using LPARAM = std::intptr_t;
 using LRESULT = std::intptr_t;
 using UINT_PTR = std::uintptr_t;
+using DWORD_PTR = std::uintptr_t;
 using TIMERPROC = void (*)(HWND, UINT, UINT_PTR, DWORD);
 
 #ifndef WM_USER
@@ -37,6 +38,14 @@ using TIMERPROC = void (*)(HWND, UINT, UINT_PTR, DWORD);
 #endif
 #ifndef WM_TIMER
 #   define WM_TIMER 0x0113
+#endif
+#ifndef WM_DEVICECHANGE
+#   define WM_DEVICECHANGE 0x0219
+#   define DBT_DEVNODES_CHANGED 0x0007
+#endif
+#ifndef PBT_APMSUSPEND
+#   define PBT_APMSUSPEND 0x0004
+#   define PBT_APMRESUMEAUTOMATIC 0x0012
 #endif
 
 // Ícones de balão da bandeja (Shell_NotifyIcon), usados como "flags" de BaloonPopup

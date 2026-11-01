@@ -13,6 +13,10 @@
 #include "TestPrint.h"
 
 #include <atomic>
+#include <chrono>
+#include <cstdio>
+#include <string>
+#include <thread>
 #include <cstdlib>
 #include <cstring>
 
@@ -86,4 +90,32 @@ TEST(PulseAudioDev, ListaEFluxoReal)
     pjmedia_aud_subsys_shutdown();
     pj_caching_pool_destroy(&cp);
     pj_shutdown();
+}
+
+// Monitor de dispositivos: uma saída que aparece e some (null-sink temporário no servidor de
+// som do usuário, retirado no fim) gera avisos.
+TEST(PulseAudioDev, MonitorDeDispositivos)
+{
+    if (!std::getenv("MSIP_TEST_AUDIO"))
+        GTEST_SKIP() << "defina MSIP_TEST_AUDIO=1 (servidor de som e pactl) para o teste do monitor";
+    static std::atomic<int> events{0};
+    events = 0;
+    ASSERT_TRUE(msip_pulse_audio_monitor_start([](void*) { events++; }, nullptr));
+    std::string module;
+    if (FILE* p = popen("pactl load-module module-null-sink sink_name=msip_test_monitor 2>/dev/null", "r")) {
+        char buf[64] = "";
+        if (fgets(buf, sizeof(buf), p))
+            module = buf;
+        pclose(p);
+    }
+    ASSERT_FALSE(module.empty()) << "pactl load-module falhou";
+    for (int i = 0; i < 30 && events == 0; i++)
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    const int afterAdd = events;
+    EXPECT_EQ(std::system(("pactl unload-module " + module).c_str()), 0);
+    for (int i = 0; i < 30 && events == afterAdd; i++)
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    msip_pulse_audio_monitor_stop();
+    EXPECT_GE(afterAdd, 1);
+    EXPECT_GT(events.load(), afterAdd);
 }

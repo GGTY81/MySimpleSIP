@@ -32,3 +32,9 @@ bool msip_pulse_audio_install();
 
 // true se o backend PulseAudio está em uso nesta sessão do pjsua.
 bool msip_pulse_audio_active();
+
+// Monitor de dispositivos (no MicroSIP, CMMNotificationClient → WM_DEVICECHANGE): chama
+// cb(data) — na thread do PulseAudio — quando uma saída ou entrada aparece ou some.
+// Devolve false sem servidor de som.
+bool msip_pulse_audio_monitor_start(void (*cb)(void*), void* data);
+void msip_pulse_audio_monitor_stop();

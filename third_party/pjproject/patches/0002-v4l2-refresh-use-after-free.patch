@@ -1,0 +1,31 @@
+--- a/pjmedia/src/pjmedia-videodev/v4l2_dev.c	2026-10-31 22:08:29.891512552 -0300
++++ b/pjmedia/src/pjmedia-videodev/v4l2_dev.c	2026-10-31 22:08:29.903800189 -0300
+@@ -286,6 +286,8 @@
+         pj_pool_release(f->dev_pool);
+         f->dev_pool = NULL;
+     }
++    /* MySimpleSIP: dev_info estava no pool que acabou de ser liberado */
++    f->dev_info = NULL;
+ 
+     pj_bzero(vdi, sizeof(vdi));
+     old_count = f->dev_count;
+@@ -377,12 +379,13 @@
+     if (f->dev_count == 0)
+         return PJ_SUCCESS;
+ 
+-    if (f->dev_count > old_count || f->dev_info == NULL) {
+-        f->dev_info = (vid4lin_dev_info*)
+-                      pj_pool_calloc(f->dev_pool,
+-                                     f->dev_count,
+-                                     sizeof(vid4lin_dev_info));
+-    }
++    /* MySimpleSIP: sempre aloca no pool novo (reaproveitar o dev_info antigo
++     * quando o número de câmeras não aumentava gravava em memória liberada) */
++    PJ_UNUSED_ARG(old_count);
++    f->dev_info = (vid4lin_dev_info*)
++                  pj_pool_calloc(f->dev_pool,
++                                 f->dev_count,
++                                 sizeof(vid4lin_dev_info));
+     pj_memcpy(f->dev_info, vdi, f->dev_count * sizeof(vid4lin_dev_info));
+ 
+     return PJ_SUCCESS;

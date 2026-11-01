@@ -7,7 +7,8 @@ plano de fases em [ANALISE_E_PLANO.md](ANALISE_E_PLANO.md).
 ## Pilha
 
 C++20 · CMake/Ninja · Qt 6 Widgets · pjproject 2.15.1 (compilado estaticamente por
-`scripts/build-pjproject.sh`, com `third_party/pjproject/config_site.h` e patches próprios) ·
+`scripts/build-pjproject.sh`, com `third_party/pjproject/config_site.h` e patches próprios em
+`third_party/pjproject/patches/`: compatibilidade com FFmpeg 8 e correção no refresh das câmeras V4L2) ·
 SQLiteCpp · jsoncpp · QtKeychain · libpulse · libmp3lame · GoogleTest.
 
 ## Compilar
@@ -39,7 +40,7 @@ Testes opcionais (usam recursos reais da máquina):
 | Variável | Testes | Requisito |
 |---|---|---|
 | `MSIP_TEST_SIP=1` | chamadas, presença, transferência, conferência, gravação, comandos e mensagens SIP reais pela janela, contra o `msip-cli` | portas UDP 5060, 5070 e 5080 livres |
-| `MSIP_TEST_AUDIO=1` | backend PulseAudio/PipeWire (1 s tocando silêncio e lendo o microfone) | servidor de som |
+| `MSIP_TEST_AUDIO=1` | backend PulseAudio/PipeWire (1 s tocando silêncio e lendo o microfone) e monitor de dispositivos (cria e retira um *null-sink* temporário) | servidor de som e `pactl` |
 | `MSIP_TEST_KEYRING=1` | senha no chaveiro do GNOME | sessão gráfica com chaveiro |
 
 ```bash

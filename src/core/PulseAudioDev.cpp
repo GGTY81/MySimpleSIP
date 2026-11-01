@@ -539,3 +539,99 @@ bool msip_pulse_audio_active()
 {
     return g_active;
 }
+
+// ---------------------------------------------------------------- monitor de dispositivos
+
+namespace {
+
+struct DeviceMonitor {
+    pa_threaded_mainloop* ml = nullptr;
+    pa_context* ctx = nullptr;
+    void (*cb)(void*) = nullptr;
+    void* data = nullptr;
+};
+DeviceMonitor g_monitor;
+
+void MonitorEventCb(pa_context*, pa_subscription_event_type_t t, uint32_t, void* userdata)
+{
+    auto* m = static_cast<DeviceMonitor*>(userdata);
+    const unsigned facility = t & PA_SUBSCRIPTION_EVENT_FACILITY_MASK;
+    const unsigned type = t & PA_SUBSCRIPTION_EVENT_TYPE_MASK;
+    // como o CMMNotificationClient: dispositivo que aparece ou some. A troca do padrão do
+    // servidor não precisa de aviso: os fluxos do pseudo-dispositivo padrão já a seguem.
+    if ((facility == PA_SUBSCRIPTION_EVENT_SINK || facility == PA_SUBSCRIPTION_EVENT_SOURCE)
+        && (type == PA_SUBSCRIPTION_EVENT_NEW || type == PA_SUBSCRIPTION_EVENT_REMOVE)) {
+        if (m->cb) {
+            m->cb(m->data);
+        }
+    }
+}
+
+void MonitorStateCb(pa_context* c, void* userdata)
+{
+    auto* m = static_cast<DeviceMonitor*>(userdata);
+    if (pa_context_get_state(c) == PA_CONTEXT_READY) {
+        pa_context_set_subscribe_callback(c, &MonitorEventCb, m);
+        pa_operation* op = pa_context_subscribe(
+            c, static_cast<pa_subscription_mask_t>(PA_SUBSCRIPTION_MASK_SINK | PA_SUBSCRIPTION_MASK_SOURCE), nullptr, nullptr);
+        if (op) {
+            pa_operation_unref(op);
+        }
+    }
+    pa_threaded_mainloop_signal(m->ml, 0);
+}
+
+} // namespace
+
+bool msip_pulse_audio_monitor_start(void (*cb)(void*), void* data)
+{
+    msip_pulse_audio_monitor_stop();
+    DeviceMonitor& m = g_monitor;
+    m.ml = pa_threaded_mainloop_new();
+    if (!m.ml) {
+        return false;
+    }
+    m.cb = cb;
+    m.data = data;
+    m.ctx = pa_context_new(pa_threaded_mainloop_get_api(m.ml), "MySimpleSIP (dispositivos)");
+    bool ok = false;
+    if (m.ctx) {
+        pa_context_set_state_callback(m.ctx, &MonitorStateCb, &m);
+        if (pa_context_connect(m.ctx, nullptr, PA_CONTEXT_NOAUTOSPAWN, nullptr) >= 0
+            && pa_threaded_mainloop_start(m.ml) >= 0) {
+            pa_threaded_mainloop_lock(m.ml);
+            for (;;) {
+                const pa_context_state_t st = pa_context_get_state(m.ctx);
+                if (st == PA_CONTEXT_READY) {
+                    ok = true;
+                    break;
+                }
+                if (!PA_CONTEXT_IS_GOOD(st)) {
+                    break;
+                }
+                pa_threaded_mainloop_wait(m.ml);
+            }
+            pa_threaded_mainloop_unlock(m.ml);
+        }
+    }
+    if (!ok) {
+        msip_pulse_audio_monitor_stop();
+    }
+    return ok;
+}
+
+void msip_pulse_audio_monitor_stop()
+{
+    DeviceMonitor& m = g_monitor;
+    if (m.ml) {
+        pa_threaded_mainloop_stop(m.ml);
+    }
+    if (m.ctx) {
+        pa_context_disconnect(m.ctx);
+        pa_context_unref(m.ctx);
+    }
+    if (m.ml) {
+        pa_threaded_mainloop_free(m.ml);
+    }
+    m = DeviceMonitor();
+}
