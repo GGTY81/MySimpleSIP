@@ -290,6 +290,11 @@ void CmainDlg::OnInitDialog()
     m_mainTab->setCurrentIndex(accountSettings.activeTab >= 0 && accountSettings.activeTab < m_mainTab->count()
                                    ? accountSettings.activeTab : 0);
 
+    // BOOL minimized = !lstrcmp(theApp.m_lpCmdLine, _T("/minimized"))
+    if (msip_command_line == _T("/minimized")) {
+        msip_command_line = _T("");
+        m_startMinimized = true;
+    }
     m_startMinimized = (!firstRun && m_startMinimized) || accountSettings.minimized;
 
     ShowTrayIcon();
@@ -365,8 +370,14 @@ LRESULT CmainDlg::OnCreated(WPARAM, LPARAM)
     }
 
     PJCreate();
-    // MySimpleSIP: CommandLine(theApp.m_lpCmdLine) e RegisterShellHookWindow → Fase 7
+
+    if (msip_command_line.GetLength()) {
+        CString params = msip_command_line;
+        msip_command_line.Empty();
+        CommandLine(params);
+    }
     PJAccountAdd();
+    // MySimpleSIP: RegisterShellHookWindow (WM_SHELLHOOKMESSAGE) não tem equivalente no Linux
     return 0;
 }
 
@@ -765,7 +776,10 @@ void CmainDlg::UpdateWindowText(CString text, int icon, bool afterRegister)
                             }
                         }
                     }
-                    // MySimpleSIP: dialNumberDelayed (DialNumber) chega com o Dialer
+                    if (!dialNumberDelayed.IsEmpty()) {
+                        DialNumber(dialNumberDelayed);
+                        dialNumberDelayed = _T("");
+                    }
                 }
                 else if (str == _T("In Progress")) {
                     str.Format(_T("%s..."), Translate(_T("Connecting")));
@@ -2864,6 +2878,258 @@ void CmainDlg::OnTimer(UINT_PTR TimerVal)
     }
 }
 
+void CmainDlg::OnInstanceMessage(const QString& line)
+{
+    if (line == QLatin1String("exit")) {
+        OnMenuExit(); // WM_COMMAND ID_EXIT
+    }
+    else if (line.startsWith(QLatin1String("cmd "))) {
+        // OnCopyData (dwData = 1) e, se ele pedir, ShowWindow + SetForegroundWindow
+        BOOL res = TRUE;
+        if (is_pjsua_running()) {
+            res = CommandLine(CS(line.mid(4)));
+        }
+        if (res) {
+            onTrayNotify(0, 0);
+        }
+    }
+    else {
+        onTrayNotify(0, 0); // mostrar e trazer para a frente
+    }
+}
+
+LRESULT CmainDlg::onCommandLine(WPARAM, LPARAM lParam)
+{
+    CString* str = (CString*)lParam;
+    CommandLine(*str);
+    delete str;
+    return 0;
+}
+
+bool CmainDlg::CommandLine(CString params)
+{
+    bool activate = false;
+    params.Trim();
+    if (params.GetLength() >= 2 && params.GetAt(0) == '"' && params.GetAt(params.GetLength() - 1) == '"') { // MySimpleSIP: + GetLength (GetAt fora do limite)
+        params = params.Mid(1, params.GetLength() - 2);
+    }
+    if (!params.IsEmpty()) {
+        if (params.Find(_T("msip:")) == 0) {
+            CString cmd = params.Mid(5);
+            if (cmd == _T("minimize")) {
+                hide(); // ShowWindow(SW_HIDE)
+            }
+            else if (cmd == _T("answer")) {
+                msip_call_answer();
+            }
+            else if (cmd == _T("hangupall")) {
+                msip_call_hangup_all_noincoming();
+            }
+            else if (cmd == _T("hold")) {
+                messagesDlg->OnBnClickedHold();
+            }
+            else if (cmd.Find(_T("transfer_")) == 0) {
+                messagesDlg->CallAction(MSIP_ACTION_TRANSFER, cmd.Mid(9));
+            }
+            else if (cmd == _T("micmute")) {
+                pageDialer->MuteInput(true);
+            }
+            else if (cmd == _T("micunmute")) {
+                pageDialer->MuteInput(false);
+            }
+            else if (cmd == _T("speakmute")) {
+                pageDialer->MuteOutput(true);
+            }
+            else if (cmd == _T("speakunmute")) {
+                pageDialer->MuteOutput(false);
+            }
+            else if (cmd == _T("micmuteclick")) {
+                pageDialer->OnBnClickedMuteInput();
+            }
+            else if (cmd == _T("speakmuteclick")) {
+                pageDialer->OnBnClickedMuteOutput();
+            }
+            else if (cmd == _T("micup")) {
+                pageDialer->OnBnClickedPlusInput();
+            }
+            else if (cmd == _T("micdown")) {
+                pageDialer->OnBnClickedMinusInput();
+            }
+            else if (cmd == _T("speakup")) {
+                pageDialer->OnBnClickedPlusOutput();
+            }
+            else if (cmd == _T("speakdown")) {
+                pageDialer->OnBnClickedMinusOutput();
+            }
+            else if (!cmd.IsEmpty()) {
+                DialNumberFromCommandLine(cmd);
+            }
+            return activate;
+        }
+        DialNumberFromCommandLine(params);
+    }
+    return activate;
+}
+
+void CmainDlg::DialNumberFromCommandLine(CString params)
+{
+    pjsua_acc_info info;
+    if (params.Mid(0, 4).CompareNoCase(_T("tel:")) == 0 || params.Mid(0, 4).CompareNoCase(_T("sip:")) == 0) {
+        params = params.Mid(4);
+    }
+    else if (params.Mid(0, 7).CompareNoCase(_T("callto:")) == 0) {
+        params = params.Mid(7);
+    }
+    else if (params.Mid(0, 8).CompareNoCase(_T("dialpad:")) == 0) {
+        params = params.Mid(8);
+    }
+    else if (params.Mid(0, 5).CompareNoCase(_T("dial:")) == 0) {
+        params = params.Mid(5);
+    }
+    if (params.Mid(0, 2) == _T("//")) {
+        params = params.Mid(2);
+        if (params.Right(1) == _T("/")) {
+            params = params.Mid(0, params.GetLength() - 1);
+        }
+    }
+    int pos = params.Find(_T("/account:"));
+    if (pos != -1) {
+        CString value = params.Mid(pos + 9);
+        int pos2 = -1;
+        if (!value.IsEmpty()) {
+            pos2 = value.Find(_T(" "));
+            if (pos2 != -1) {
+                value = value.Left(pos2);
+            }
+            int accountId = _wtoi(value);
+            if (accountId > 0) {
+                Account account;
+                if (accountSettings.AccountLoad(accountId, &account)) {
+                    int pos = params.Find(_T("/password:"));
+                    if (pos != -1) {
+                        account.password = params.Mid(pos + 10);
+                        accountSettings.AccountSave(accountId, &account);
+                        if (accountSettings.accountId == accountId) {
+                            PJAccountDelete();
+                            accountSettings.AccountLoad(accountSettings.accountId, &accountSettings.account);
+                            OnAccountChanged();
+                            PJAccountAdd();
+                        }
+                        params.Empty();
+                    }
+                    else {
+                        if (accountSettings.accountId != accountId) {
+                            if (accountSettings.accountId) {
+                                PJAccountDelete();
+                            }
+                            accountSettings.accountId = accountId;
+                            accountSettings.AccountLoad(accountSettings.accountId, &accountSettings.account);
+                            accountSettings.SettingsSave();
+                            OnAccountChanged();
+                            PJAccountAdd();
+                        }
+                    }
+
+                }
+                else {
+                    params.Empty();
+                }
+            }
+        }
+        // MySimpleSIP: no 2º caso o original passa pos + 9 + pos2 + 1 como quantidade
+        // (Delete(início, quantidade)) e, com texto antes de "/account:N ", apagava também o
+        // começo do que vinha depois; aqui sai exatamente "/account:N "
+        if (!params.IsEmpty()) {
+            if (pos2 == -1) {
+                params.Delete(pos - 1, params.GetLength());
+            }
+            else {
+                params.Delete(pos, 9 + pos2 + 1);
+            }
+        }
+    }
+    if (params == _T("/answer")) {
+        msip_call_answer();
+    }
+    else if (params == _T("/hangupall")) {
+        msip_call_hangup_all_noincoming();
+    }
+    else if (params == _T("/hangupincoming")) {
+        msip_call_hangup_incoming();
+    }
+    else if (params == _T("/hangupcalling")) {
+        msip_call_hangup_calling();
+    }
+    else if (params.Find(_T("/dtmf:")) == 0) {
+        CString value = params.Mid(6);
+        if (!value.IsEmpty()) {
+            pageDialer->DTMF(value);
+        }
+    }
+    else if (params.Find(_T("/password:")) == 0) {
+        CString value = params.Mid(10);
+        password = value;
+    }
+    else if (params.Find(_T("/transfer:")) == 0) {
+        CString value = params.Mid(10);
+        if (!value.IsEmpty()) {
+            messagesDlg->CallAction(MSIP_ACTION_TRANSFER, value);
+        }
+    }
+    else {
+        GotoTab(0);
+        onTrayNotify(0, 0); // onTrayNotify(NULL, WM_LBUTTONUP)
+        if (accountSettings.accountId > 0) {
+            if (pjsua_acc_is_valid(account) &&
+                (get_account_server().IsEmpty() ||
+                    (pjsua_acc_get_info(account, &info) == PJ_SUCCESS && info.status == 200)
+                    )
+                ) {
+                DialNumber(params);
+            }
+            else {
+                dialNumberDelayed = params;
+            }
+        }
+        else {
+            if (pjsua_acc_is_valid(account_local)) {
+                DialNumber(params);
+            }
+            else if (accountSettings.enableLocalAccount) {
+                dialNumberDelayed = params;
+            }
+        }
+    }
+}
+
+void CmainDlg::DialNumber(CString params)
+{
+    CString number;
+    CString message;
+    int i = params.Find(_T(" "));
+    if (i != -1) {
+        number = params.Mid(0, i);
+        message = params.Mid(i + 1);
+        message.Trim();
+    }
+    else {
+        number = params;
+    }
+    number.Replace(_T("%20"), _T(" "));
+    number.Replace(_T("%2B"), _T("+"));
+    number.Trim();
+    if (!number.IsEmpty()) {
+        if (message.IsEmpty()) {
+            CString numberAdd = number;
+            pageDialer->DialedAdd(numberAdd);
+            MakeCall(number, false, true);
+        }
+        else {
+            messagesDlg->SendInstantMessage(NULL, message, number);
+        }
+    }
+}
+
 LRESULT CmainDlg::onPager(WPARAM wParam, LPARAM lParam)
 {
     CString* number = (CString*)wParam;
@@ -2947,6 +3213,8 @@ LRESULT CmainDlg::WindowProc(UINT msg, WPARAM wParam, LPARAM lParam)
         return onUsersDirectoryLoaded(wParam, lParam);
     case UM_RESTART:
         return OnRestart(wParam, lParam);
+    case UM_ON_COMMAND_LINE:
+        return onCommandLine(wParam, lParam);
     case UM_ON_PAGER:
         return onPager(wParam, lParam);
     case UM_ON_PAGER_STATUS:

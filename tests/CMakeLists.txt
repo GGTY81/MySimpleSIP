@@ -68,6 +68,7 @@ qt_add_executable(test_ui
     ui/test_shortcuts.cpp
     ui/test_export_import.cpp
     ui/test_chat.cpp
+    ui/test_command_line.cpp
     "${PROJECT_SOURCE_DIR}/resources/resources.qrc"
     "${PROJECT_SOURCE_DIR}/resources/layout.qrc"
 )
@@ -75,6 +76,6 @@ target_include_directories(test_ui PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
 find_package(Qt6 REQUIRED COMPONENTS Test)
 target_link_libraries(test_ui PRIVATE msip_ui Qt6::Test GTest::gtest)
 target_compile_options(test_ui PRIVATE -Wall -Wextra -Wno-reorder)
-target_compile_definitions(test_ui PRIVATE MSIP_CLI_PATH="$<TARGET_FILE:msip-cli>")
-add_dependencies(test_ui msip-cli)
+target_compile_definitions(test_ui PRIVATE MSIP_CLI_PATH="$<TARGET_FILE:msip-cli>" MSIP_APP_PATH="$<TARGET_FILE:mysimplesip>")
+add_dependencies(test_ui msip-cli mysimplesip)
 gtest_discover_tests(test_ui PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")

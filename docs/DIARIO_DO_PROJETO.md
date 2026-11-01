@@ -7,13 +7,13 @@
 
 | Campo | Valor |
 |---|---|
-| Versão vigente | **0.6.0** (ver arquivo `VERSION`) |
-| Fase | 7 — Integração Linux (→ 0.7.0), a iniciar. Fases 0 a 6 concluídas |
+| Versão vigente | **0.6.1** (ver arquivo `VERSION`) |
+| Fase | 7 — Integração Linux (→ 0.7.0), em andamento. Fases 0 a 6 concluídas |
 | Base de referência | MicroSIP 3.22.16 (fonte em `reference/MicroSIP-3.22.16/`) + sons/langpacks do binário 3.22.12 (`reference/MicroSIP-3.22.12-assets/`), ambos somente leitura. MicroSIP 3.22.12 instalado no Bottles serve de comparação visual/funcional |
 | Pilha decidida | C++20 · CMake/Ninja · Qt 6 Widgets · pjproject 2.15.1 (mesma versão do binário do MicroSIP; tarball em `third_party/`) · SQLite/SQLiteCpp · QtKeychain · hidapi |
 | Alvo | Ubuntu 26.04 LTS, x86_64, GNOME (Wayland, rodando via XWayland por padrão) |
 | Repositório | https://github.com/GGTY81/MySimpleSIP (público, `main`) |
-| Próxima ação | Fase 7: comandos de linha (`/answer`, `/hangupall`, URIs `sip:`/`tel:` repassados pela instância única), manipulador `sip:`/`tel:` no `.desktop`, notificações, mudança de rede (`QNetworkInformation` → `IsNetworkChanged`/`PortKnock`/`pjsua_handle_ip_change`), suspensão (logind), teclas de mídia (MPRIS) e fone HID; retirar o ruído do JACK (pjproject sem ALSA). Pendente: testes reais do responsável (atalhos com BLF, teclas de atalho, exportar/importar, chat com o PBX) |
+| Próxima ação | Fase 7, parte 2: notificações, mudança de rede (`QNetworkInformation` → `IsNetworkChanged`/`PortKnock`/`pjsua_handle_ip_change`), suspensão (logind), teclas de mídia (MPRIS) e fone HID; retirar o ruído do JACK (pjproject sem ALSA). Pendente: testes reais do responsável (atalhos com BLF, teclas de atalho, exportar/importar, chat com o PBX) |
 
 ## Convenções
 
@@ -45,6 +45,7 @@
 | 0.2.1 | 2026-10-30 | Fase 3, parte 1: senhas no chaveiro do sistema (`KeychainPasswordStore`, QtKeychain/Secret Service); janela principal Qt `CmainDlg` (deriva de `CmainDlgCore`): abas, botão de menu, barra de status com ícone, `UpdateWindowText`, bandeja, menu principal, posição/tamanho salvos; `main.cpp` passa a abrir a janela real. |
 | 0.2.2 | 2026-10-30 | Fase 3, parte 2: `CDialogLayout` (monta qualquer `IDD_*` a partir de `dialogs.json`, controles acessados pelo ID do `.rc`); `AccountDlg` portado (nova/editar/excluir conta, conta local, senha no chaveiro); teste de interface offscreen `test_ui`. |
 | 0.2.3 | 2026-10-30 | Fase 3, parte 3: `Dialer` (aba Telefone) portado — teclado, número com histórico, Chamar/Encerrar, volumes/mudo, VU-meter, DTMF, DND/AA/FWD/AC/CONF/REC; controles `CButtonDialer/CButtonEx/CLevelsSliderCtrl`; `CDialogLayout` com controles próprios e `AutoMove/AutoUnmove`; chamadas pela janela com provisórios (`MakeCall/PerformCall`, toque e caixa Atender/Rejeitar). |
+| 0.6.1 | 2026-10-31 | Fase 7, parte 1: **linha de comando do MicroSIP** — `CommandLine`/`DialNumberFromCommandLine`/`DialNumber` (números e URIs `sip:`/`tel:`/`callto:`/`dial:`, mensagem "número texto", `/answer`, `/hangupall`, `/hangupincoming`, `/hangupcalling`, `/dtmf:`, `/transfer:`, `/account:N`, `/password:`, `msip:*`), repassada à instância aberta (protocolo `show`/`exit`/`cmd` no servidor local, no lugar de `WM_COPYDATA`), `/exit`, `/reset` e `/resetnoask` (inclusive senhas do chaveiro), número à espera do registro (`dialNumberDelayed`); `install-desktop-entry.sh --default-handler` (links `sip:`/`tel:`/`callto:`); 98 testes. |
 | **0.6.0** | 2026-10-31 | **Fim da Fase 6 (Configurações e mensagens).** Exportar/Importar configuração (`ExportDlg`/`ImportDlg`: contas escolhidas e ordenadas, configurações e atalhos num INI; importação acrescenta contas e reinicia quando traz configurações); senhas fora do INI do perfil ficam ofuscadas no próprio arquivo, sem tocar no chaveiro; mensagens SIP recebidas e falhas de envio na janela de mensagens (`onPager`/`onPagerStatus`/`MessagesIncoming`); comando `message` na CLI de teste; 95 testes. |
 | 0.5.3 | 2026-10-31 | Fase 6, parte 2: **atalhos do discador** — `ShortcutsDlg` (8 atalhos: rótulo, número, tipo de ação, alternância com 2º rótulo/número, presença/BLF; ativar e posição lateral/embaixo), botões no Discador (coluna lateral de 180 px ou linhas de 25 px embaixo, em duas colunas acima de 4), presença e "tocando" piscando nos botões, `CmainDlg::ShortcutAction/ShortcutsRemoveAll/OnRestart` (reinício ao mudar a posição); teclas de atalho do `CBaseDialog` (Ctrl+Tab, Ctrl+M/L/P/S/Q/I/O, F2, F4, F10); 91 testes. |
 | 0.5.2 | 2026-10-31 | Áudio pelo **PulseAudio/PipeWire**: backend próprio do pjmedia (`PulseAudioDev`) com os nomes dos dispositivos do sistema e o "Padrão" seguindo o dispositivo padrão do PipeWire (ex.: fone Bluetooth); ALSA como reserva sem servidor de som; comando `devices` na CLI de teste; 89 testes. |
@@ -326,6 +327,12 @@
 - **CLI de teste:** comando `message <número> <texto>` (`pjsua_im_send`).
 - **Testes:** `SettingsTest.OutroArquivoNaoUsaOChaveiro`, `ExportImport.ExportaReordenaEImporta` (listas, setas, Delete/Espaço, arquivo exportado com contas renumeradas e senha ofuscada, importação acrescentando a conta, reinício ao importar configurações), `Chat.MensagemRecebidaEFalhaDeEnvio` e `Chat.TrocaRealDeMensagensComCli` (`MSIP_TEST_SIP=1`: CLI → janela e resposta janela → CLI). 95 testes no build normal e no ASan/UBSan; interface com SIP real 23/23 sob ASan sem avisos. Captura: `docs/layout/exportar-0.6.0.png` (`MSIP_SCREENSHOT_DIALOG=export`, contas fictícias). **Fim da Fase 6.**
 
+### 2026-10-31 — Sessão 31: Fase 7, parte 1 — linha de comando e links de telefone (0.6.1)
+- **`CmainDlg`**: `CommandLine` (aspas externas, `msip:minimize/answer/hangupall/hold/transfer_N/micmute/micunmute/speakmute/speakunmute/micmuteclick/speakmuteclick/micup/micdown/speakup/speakdown`, demais `msip:` = discar), `DialNumberFromCommandLine` (prefixos `tel:`/`sip:`/`callto:`/`dialpad:`/`dial:` e `//`, `/account:N` com troca de conta ou `/password:` gravando a senha, `/answer`, `/hangupall`, `/hangupincoming`, `/hangupcalling`, `/dtmf:`, `/password:`, `/transfer:`, e o resto mostra a janela e disca — ou guarda em `dialNumberDelayed` até o registro 200, consumido em `UpdateWindowText`), `DialNumber` (número + texto = mensagem SIP), `onCommandLine` (`UM_ON_COMMAND_LINE`). Na criação, a linha de comando roda depois do `PJCreate` (como no `OnCreated` original). Correção marcada: o `Delete` do `/account:N` seguido de outro texto apagava caracteres demais quando havia algo antes; aspas sozinhas não leem fora do texto.
+- **`main.cpp` (InitInstance)**: argumentos posicionais unidos por espaço = `m_lpCmdLine`; `--minimized` continua valendo (= `/minimized`). Instância única: a 2ª execução manda uma linha ao servidor local da 1ª — `show`, `exit` (`/exit` → `ID_EXIT`) ou `cmd <linha>` (`WM_COPYDATA` → `CmainDlg::OnInstanceMessage` → `CommandLine`; mostra a janela se pedir ou se o pjsua não estiver rodando); `/minimized` com instância aberta não faz nada; `/answer` e `/hangupall` sem instância só terminam. `/reset` (duas confirmações) e `/resetnoask` fecham a instância aberta e chamam `msip_reset_user_data()` (`settings.cpp`): remove do chaveiro as senhas das contas do INI e apaga as pastas XDG do aplicativo (config, data, state — só se o nome for o do aplicativo); no modo portátil apaga só os arquivos do aplicativo na pasta do executável (o original apagaria a pasta inteira).
+- **Links de telefone:** o `.desktop` já declarava `x-scheme-handler/sip;tel;callto` com `Exec=... %u`; `scripts/install-desktop-entry.sh --default-handler` registra o MySimpleSIP como padrão (`xdg-mime default`), como o instalador do MicroSIP. `docs/INSTALACAO.md` ganhou a seção "Linha de comando".
+- **Testes:** `CommandLine.ComandosMsipContaESenha` (msip:*, aspas, minimize, `/account:1 /password:`, conta inexistente, troca de conta com `dialNumberDelayed`, `show`), `CommandLine.InstanciaUnicaRepassaESai` (executável real: `/answer` sem instância termina, 2ª execução repassa e sai, `/exit` fecha a 1ª, `/resetnoask` apaga só as pastas do aplicativo) e `CommandLine.DiscaEDesligaComCli` (`MSIP_TEST_SIP=1`: `cmd sip:127.0.0.1` liga para a CLI e `cmd /hangupall` desliga). 98 testes no build normal e no ASan/UBSan; interface com SIP real 26/26 sob ASan.
+
 ---
 
 ## Ambiente de desenvolvimento verificado (2026-10-30)
@@ -457,8 +464,8 @@ Indisponíveis nos repositórios: `sipp` (usar contêiner com Podman) e `libilbc
 - [x] Chat (SIP MESSAGE) na janela de mensagens; port knock (no núcleo desde a 0.1.2; na mudança de rede → Fase 7) (0.6.0).
 
 ### Fase 7 — Integração Linux → 0.7.0
-- [~] Instância única (feita na 0.2.4: 2ª execução mostra a 1ª) + comandos de linha (`/minimized` feito; `/exit`, `/reset`, `/answer`, `/hangupall`, `/hold`, `/mic*`, `/speak*`, URIs a fazer).
-- [ ] Handler `sip:`/`tel:`/`callto:` (.desktop), autostart, chaveiro, notificações.
+- [x] Instância única (0.2.4) + comandos de linha repassados à instância aberta (`/exit`, `/reset`, `/answer`, `/hangupall`, `msip:*`, URIs) (0.6.1).
+- [~] Handler `sip:`/`tel:`/`callto:` (.desktop, `--default-handler`) (0.6.1), autostart (0.5.1), chaveiro (0.2.1); notificações a fazer.
 - [ ] Monitores: rede (netlink/QNetworkInformation), suspensão/sessão (logind), dispositivos de áudio.
 - [x] Backend de áudio pjmedia PulseAudio/PipeWire (antecipado na 0.5.2).
 - [ ] Teclas multimídia (MPRIS/D-Bus), headset HID (hidapi + udev).

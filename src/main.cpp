@@ -37,6 +37,7 @@
 #include <QApplication>
 #include <QCryptographicHash>
 #include <QLocalServer>
+#include <QMessageBox>
 #include <QProcess>
 #include <QLocalSocket>
 #include <QCommandLineParser>
@@ -67,6 +68,12 @@ int main(int argc, char* argv[])
                                         QStringLiteral("Salva uma imagem da janela em <arquivo> e encerra (testes)."),
                                         QStringLiteral("arquivo"));
     parser.addOptions({versionOption, minimizedOption, quitOption, screenshotOption});
+    parser.addPositionalArgument(QStringLiteral("comando"),
+                                 QStringLiteral("Como no MicroSIP: número ou URI (sip:, tel:, callto:) para discar, "
+                                                "/minimized, /exit, /answer, /hangupall, /hangupincoming, /hangupcalling, "
+                                                "/dtmf:N, /transfer:N, /account:N, msip:answer, msip:hold, msip:micmute..., "
+                                                "/reset, /resetnoask."),
+                                 QStringLiteral("[comando...]"));
     parser.process(app);
 
     if (parser.isSet(versionOption)) {
@@ -74,24 +81,66 @@ int main(int argc, char* argv[])
                     MSIP_BASE_VERSION, pj_get_version(), qVersion());
         return 0;
     }
-    if (parser.isSet(minimizedOption))
-        msip_command_line = _T("/minimized");
+    // theApp.m_lpCmdLine: os argumentos (sem as opções do Qt) unidos por espaço
+    QString cmdLine = parser.positionalArguments().join(QLatin1Char(' ')).trimmed();
+    cmdLine.replace(QLatin1Char('\n'), QLatin1Char(' '));
+    if (parser.isSet(minimizedOption) && cmdLine.isEmpty())
+        cmdLine = QStringLiteral("/minimized");
+    msip_command_line = CS(cmdLine);
 
-    // Instância única (no MicroSIP: FindWindow + WM_COPYDATA para a janela já aberta).
-    // Um servidor local por usuário e por arquivo INI: a segunda execução pede à primeira
-    // que mostre a janela e termina. MySimpleSIP: repasse da linha de comando → Fase 7.
+    // Instância única (no MicroSIP: EnumWindows + WM_COPYDATA para a janela já aberta).
+    // Um servidor local por usuário e por arquivo INI; a segunda execução manda uma linha à
+    // primeira e termina: "show" (mostrar), "exit" (/exit → ID_EXIT) ou "cmd <linha de
+    // comando>" (WM_COPYDATA: CmainDlg::CommandLine, que decide se mostra a janela).
     const AppPaths paths = ResolveAppPaths(_T(_GLOBAL_NAME_NICE));
     const QString serverName = QStringLiteral("mysimplesip-%1-%2")
                                    .arg(getuid())
                                    .arg(QString::fromLatin1(QCryptographicHash::hash(QS(paths.iniFile).toUtf8(), QCryptographicHash::Md5).toHex().left(12)));
-    {
+    auto sendToRunning = [&serverName](const QString& message) -> bool {
         QLocalSocket socket;
         socket.connectToServer(serverName);
-        if (socket.waitForConnected(500)) {
-            socket.write("show\n");
-            socket.waitForBytesWritten(500);
-            return 0;
+        if (!socket.waitForConnected(500))
+            return false;
+        if (!message.isEmpty()) {
+            socket.write(message.toUtf8() + '\n');
+            socket.waitForBytesWritten(1000);
         }
+        socket.disconnectFromServer();
+        if (socket.state() != QLocalSocket::UnconnectedState)
+            socket.waitForDisconnected(1000);
+        return true;
+    };
+    const bool cmdReset = cmdLine == QLatin1String("/reset");
+    const bool cmdResetNoAsk = cmdLine == QLatin1String("/resetnoask");
+    if (cmdReset || cmdResetNoAsk) {
+        LoadLangPackModule();
+        KeychainPasswordStore passwordStore;
+        SetPasswordStore(&passwordStore);
+        sendToRunning(QStringLiteral("exit")); // ::SendMessage(hWndRunning, WM_CLOSE)
+        accountSettings.Init(); // com "/reset" só resolve os caminhos
+        if (cmdResetNoAsk
+            || QMessageBox::question(nullptr, QStringLiteral(_GLOBAL_NAME_NICE),
+                                     TR(_T("Do you want to delete user data and program settings? This action cannot be undone.")),
+                                     QMessageBox::Yes | QMessageBox::No, QMessageBox::No) == QMessageBox::Yes) {
+            if (cmdResetNoAsk
+                || QMessageBox::question(nullptr, QStringLiteral(_GLOBAL_NAME_NICE), TR(_T("Are you sure you want to delete?")),
+                                         QMessageBox::Yes | QMessageBox::No, QMessageBox::No) == QMessageBox::Yes) {
+                msip_reset_user_data();
+            }
+        }
+        SetPasswordStore(nullptr);
+        return 0;
+    }
+    if (cmdLine == QLatin1String("/exit")) {
+        sendToRunning(QStringLiteral("exit"));
+        return 0;
+    }
+    if (cmdLine == QLatin1String("/minimized") ? sendToRunning(QString())
+                                                : sendToRunning(cmdLine.isEmpty() ? QStringLiteral("show") : QStringLiteral("cmd ") + cmdLine)) {
+        return 0;
+    }
+    if (cmdLine == QLatin1String("/answer") || cmdLine == QLatin1String("/hangupall")) {
+        return 0;
     }
     QLocalServer::removeServer(serverName);
     QLocalServer instanceServer;
@@ -113,8 +162,16 @@ int main(int argc, char* argv[])
     auto* dlg = new CmainDlg(&backend, parser.isSet(minimizedOption));
     QObject::connect(&instanceServer, &QLocalServer::newConnection, dlg, [&instanceServer, dlg] {
         while (QLocalSocket* client = instanceServer.nextPendingConnection()) {
+            // uma linha por conexão (ver sendToRunning); conexão sem texto: nada a fazer
+            auto readLine = [client, dlg] {
+                while (client->canReadLine()) {
+                    const QString line = QString::fromUtf8(client->readLine()).trimmed();
+                    dlg->OnInstanceMessage(line);
+                }
+            };
+            QObject::connect(client, &QLocalSocket::readyRead, dlg, readLine);
             QObject::connect(client, &QLocalSocket::disconnected, client, &QObject::deleteLater);
-            dlg->onTrayNotify(0, 0); // mostrar e trazer para a frente
+            readLine();
         }
     });
 

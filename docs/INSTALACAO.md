@@ -70,6 +70,13 @@ dock), crie o atalho — não precisa de `sudo`, nada é copiado para o sistema:
 ./scripts/install-desktop-entry.sh
 ```
 
+Para que os links de telefone (`sip:`, `tel:` e `callto:`, por exemplo num site ou num
+e-mail) abram direto no MySimpleSIP, como faz o instalador do MicroSIP no Windows, use:
+
+```bash
+./scripts/install-desktop-entry.sh --default-handler
+```
+
 Para iniciar junto com o sistema, marque **Executar na inicialização do sistema** em
 menu → **Configurações** (cria `~/.config/autostart/mysimplesip.desktop`).
 
@@ -101,6 +108,33 @@ Em menu → **Configurações**, os campos **Ouvir chamada em**, **Ouvir toque e
 **Microfone** listam os dispositivos com os nomes do sistema. **Padrão** segue o
 dispositivo padrão escolhido em *Configurações do Ubuntu → Som* — inclusive quando um fone
 Bluetooth conecta. Recomenda-se deixar **Padrão**.
+
+## 7. Linha de comando
+
+Os mesmos comandos do MicroSIP funcionam no terminal (ou em atalhos de teclado do GNOME).
+Com o MySimpleSIP já aberto, o comando é repassado para ele:
+
+| Comando | O que faz |
+|---|---|
+| `mysimplesip 1001` / `mysimplesip sip:1001@pbx` / `tel:+5511...` | disca o número |
+| `mysimplesip "1001 Olá"` | envia a mensagem SIP "Olá" para 1001 |
+| `mysimplesip /answer` | atende a chamada que está tocando |
+| `mysimplesip /hangupall` | desliga todas as chamadas |
+| `mysimplesip /hangupincoming` / `/hangupcalling` | recusa as recebidas / cancela as que estão chamando |
+| `mysimplesip /dtmf:123` | envia os dígitos DTMF |
+| `mysimplesip /transfer:1002` | transfere a chamada atual para 1002 |
+| `mysimplesip 1001 /account:2` | troca para a conta 2 e disca |
+| `mysimplesip msip:hold` | coloca/retira a chamada da espera |
+| `mysimplesip msip:micmute` / `msip:micunmute` / `msip:micmuteclick` | microfone mudo / com som / alterna |
+| `mysimplesip msip:speakmute` / `msip:speakunmute` / `msip:speakmuteclick` | saída de áudio muda / com som / alterna |
+| `mysimplesip msip:micup` / `msip:micdown` / `msip:speakup` / `msip:speakdown` | volume do microfone / da saída |
+| `mysimplesip msip:minimize` | esconde a janela na bandeja |
+| `mysimplesip --minimized` (ou `/minimized`) | inicia escondido na bandeja |
+| `mysimplesip /exit` | fecha o MySimpleSIP aberto |
+| `mysimplesip /reset` | apaga configurações, contas, histórico e contatos (pede confirmação duas vezes; `/resetnoask` não pede) |
+
+Para usar `mysimplesip` sem o caminho completo, chame `./build/src/mysimplesip` ou crie um
+link em `~/.local/bin`.
 
 ## Atualizar
 

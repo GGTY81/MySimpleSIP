@@ -192,6 +192,9 @@ extern bool firstRun;
 extern CTime startTime;
 // MySimpleSIP: linha de comando (no MFC vinha de AfxGetApp()->m_lpCmdLine); main() preenche.
 extern CString msip_command_line;
+// MySimpleSIP: /reset e /resetnoask (CmicrosipApp::InitInstance) — apaga os dados do usuário
+// e as senhas guardadas no chaveiro. Chamar depois de accountSettings.Init().
+void msip_reset_user_data();
 
 CString ShortcutEncode(Shortcut *pShortcut);
 void ShortcutDecode(const CString& str, Shortcut* pShortcut, bool noDefault = false);

@@ -24,6 +24,7 @@
 #include "PasswordStore.h"
 
 #include <algorithm>
+#include <filesystem>
 #include <vector>
 
 // MySimpleSIP: "Statistics statistics" (telemetria) não portado.
@@ -1255,6 +1256,45 @@ void ShortcutDecode(const CString& str, Shortcut* pShortcut, bool noDefault)
             }
         } else {
             pShortcut->number = str.Mid(begin);
+        }
+    }
+}
+
+void msip_reset_user_data()
+{
+    // RecursiveDelete(appDataRoaming) e RecursiveDelete(appDataLocal) do original. Aqui os
+    // dados ficam em três pastas XDG (config com o INI, data, state), todas com o nome do
+    // aplicativo; as senhas estão no chaveiro, fora delas. No modo portátil a pasta é a do
+    // executável: só os arquivos do aplicativo saem.
+    if (IPasswordStore* store = GetPasswordStore()) {
+        for (int i = 0; i < 100; i++) {
+            CString section;
+            section.Format(_T("Account%d"), i);
+            if (IniSectionExists(section, accountSettings.iniFile)) {
+                store->Remove(section);
+            }
+        }
+    }
+    PrivateProfileFlushCache();
+    std::error_code ec;
+    auto path = [](const CString& s) { return std::filesystem::path(CStringA(s).GetString()); }; // UTF-8, como em Paths.cpp
+    if (accountSettings.isPortable) {
+        for (const CString& file : {accountSettings.iniFile, accountSettings.logFile,
+                                    accountSettings.pathRoaming + _T("call_log.db"),
+                                    accountSettings.pathRoaming + _T("contacts.db"),
+                                    accountSettings.pathRoaming + _T("Contacts.xml")}) {
+            std::filesystem::remove(path(file), ec);
+        }
+        return;
+    }
+    const std::filesystem::path appName = path(_T(_GLOBAL_NAME_NICE));
+    for (std::filesystem::path dir : {path(accountSettings.iniFile).parent_path(), path(accountSettings.appDataRoaming),
+                                      path(accountSettings.appDataLocal)}) {
+        if (dir.filename().empty()) {
+            dir = dir.parent_path(); // caminhos com "/" final
+        }
+        if (dir.filename() == appName) {
+            std::filesystem::remove_all(dir, ec);
         }
     }
 }

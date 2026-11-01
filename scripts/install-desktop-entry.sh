@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 # Cria (ou remove) o atalho do MySimpleSIP no menu de aplicativos do usuário, apontando
 # para o executável compilado em build/ — sem sudo, sem copiar nada para o sistema.
-# Uso: ./scripts/install-desktop-entry.sh            (instala/atualiza)
-#      ./scripts/install-desktop-entry.sh --remove   (remove)
+# Uso: ./scripts/install-desktop-entry.sh                    (instala/atualiza)
+#      ./scripts/install-desktop-entry.sh --default-handler  (instala e passa a abrir os
+#                                                             links sip:, tel: e callto:)
+#      ./scripts/install-desktop-entry.sh --remove           (remove)
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -10,6 +12,7 @@ EXE="$ROOT/build/src/mysimplesip"
 APPS="${XDG_DATA_HOME:-$HOME/.local/share}/applications"
 ICONS="${XDG_DATA_HOME:-$HOME/.local/share}/icons/hicolor"
 DESKTOP="$APPS/mysimplesip.desktop"
+SCHEMES="sip tel callto"
 
 if [[ "${1:-}" == "--remove" ]]; then
     rm -f "$DESKTOP"
@@ -48,3 +51,11 @@ DESK
 update-desktop-database "$APPS" 2>/dev/null || true
 gtk-update-icon-cache -q "$ICONS" 2>/dev/null || true
 echo "Atalho criado: $DESKTOP"
+
+if [[ "${1:-}" == "--default-handler" ]]; then
+    # como o instalador do MicroSIP no Windows: o softphone abre os links de telefone
+    for scheme in $SCHEMES; do
+        xdg-mime default mysimplesip.desktop "x-scheme-handler/$scheme"
+    done
+    echo "Links sip:, tel: e callto: passam a abrir no MySimpleSIP."
+fi

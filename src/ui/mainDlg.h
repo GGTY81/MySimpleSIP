@@ -125,6 +125,14 @@ public:
     // atalhos do discador
     void OnMenuShortcuts();
     void OnMenuExport();
+    // linha de comando (na criação ou repassada por outra execução — WM_COPYDATA no original)
+    bool CommandLine(CString params);
+    void DialNumberFromCommandLine(CString params);
+    void DialNumber(CString params);
+    LRESULT onCommandLine(WPARAM wParam, LPARAM lParam);
+    // MySimpleSIP: mensagem recebida pelo servidor de instância única ("show", "exit",
+    // "cmd <linha de comando>"), no lugar de WM_COPYDATA / WM_COMMAND(ID_EXIT)
+    void OnInstanceMessage(const QString& line);
     // mensagens SIP (MESSAGE)
     LRESULT onPager(WPARAM wParam, LPARAM lParam);
     LRESULT onPagerStatus(WPARAM wParam, LPARAM lParam);
@@ -156,6 +164,7 @@ public:
     QList<QIcon> imageListStatus; // mesma ordem de MSIP_CONTACT_ICON_*
     CArray<RinginDlg*> ringinDlgs;
     bool m_startMinimized = false;
+    CString dialNumberDelayed; // número da linha de comando à espera do registro
     bool missed = false;
 
 protected:

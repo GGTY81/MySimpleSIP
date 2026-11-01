@@ -37,6 +37,8 @@
   presença/BLF, e as teclas de atalho do MicroSIP (Ctrl+P, Ctrl+S, F2, F4...).
 - Mensagens SIP (chat) na janela de mensagens e exportar/importar configuração (contas,
   configurações e atalhos) em arquivo INI.
+- Linha de comando do MicroSIP (`mysimplesip 1001`, `/answer`, `/hangupall`, `msip:micmute`...),
+  repassada ao aplicativo já aberto, e links `sip:`/`tel:`/`callto:` abrindo no softphone.
 - Áudio pelo PipeWire/PulseAudio: os dispositivos aparecem com os nomes do sistema e o
   "Padrão" segue o dispositivo padrão do GNOME (inclusive fones Bluetooth).
 - Ícone na bandeja, instância única, senhas guardadas no chaveiro do GNOME, interface em
@@ -44,7 +46,7 @@
 
 **Em andamento** (veja o [plano](docs/ANALISE_E_PLANO.md))
 
-- Integração com o sistema (teclas de mídia, fones USB HID, mudança de rede, links `sip:`) — Fase 7.
+- Integração com o sistema (teclas de mídia, fones USB HID, mudança de rede, notificações) — Fase 7.
 - Vídeo — Fase 8. Pacote `.deb` e Release — Fase 9 (versão 1.0.0).
 
 ## Instalação no Ubuntu 26.04
