@@ -12,7 +12,9 @@
 
 #include "define.h"
 
+#include <QBoxLayout>
 #include <QMessageBox>
+#include <QToolButton>
 
 #include "langpack.h"
 #include "resource.h"
@@ -72,4 +74,24 @@ void NotYetPorted(QWidget* parent, const QString& what)
 {
     QMessageBox::information(parent, QStringLiteral(_GLOBAL_NAME_NICE),
                              QStringLiteral("%1: ainda não portado.").arg(what));
+}
+
+QWidget* CreateUpDown(QWidget* parent, bool horizontal)
+{
+    auto* w = new QWidget(parent);
+    QBoxLayout* l = horizontal ? static_cast<QBoxLayout*>(new QHBoxLayout(w)) : new QVBoxLayout(w);
+    l->setContentsMargins(0, 0, 0, 0);
+    l->setSpacing(0);
+    auto* first = new QToolButton(w);
+    auto* second = new QToolButton(w);
+    first->setObjectName(QStringLiteral("first"));
+    second->setObjectName(QStringLiteral("second"));
+    first->setArrowType(horizontal ? Qt::LeftArrow : Qt::UpArrow);
+    second->setArrowType(horizontal ? Qt::RightArrow : Qt::DownArrow);
+    for (QToolButton* b : {first, second}) {
+        b->setAutoRaise(false);
+        b->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+        l->addWidget(b);
+    }
+    return w;
 }

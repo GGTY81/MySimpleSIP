@@ -66,6 +66,8 @@ qt_add_executable(test_ui
     ui/test_transfer.cpp
     ui/test_settings_dlg.cpp
     ui/test_shortcuts.cpp
+    ui/test_export_import.cpp
+    ui/test_chat.cpp
     "${PROJECT_SOURCE_DIR}/resources/resources.qrc"
     "${PROJECT_SOURCE_DIR}/resources/layout.qrc"
 )

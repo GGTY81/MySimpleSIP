@@ -37,6 +37,8 @@ class RinginDlg;
 class Transfer;
 class SettingsDlg;
 class ShortcutsDlg;
+class ExportDlg;
+class ImportDlg;
 class Shortcut;
 class QKeyEvent;
 class QMessageBox;
@@ -122,6 +124,12 @@ public:
     LRESULT onUsersDirectoryLoaded(WPARAM wParam, LPARAM lParam);
     // atalhos do discador
     void OnMenuShortcuts();
+    void OnMenuExport();
+    // mensagens SIP (MESSAGE)
+    LRESULT onPager(WPARAM wParam, LPARAM lParam);
+    LRESULT onPagerStatus(WPARAM wParam, LPARAM lParam);
+    void MessagesIncoming(CString* number, CString* message, CTime* pTime = NULL);
+    void OnMenuImport();
     void ShortcutAction(Shortcut* shortcut, bool block = false, bool second = false);
     void ShortcutsRemoveAll();
     LRESULT OnRestart(WPARAM wParam, LPARAM lParam);
@@ -136,6 +144,8 @@ public:
     Transfer* transferDlg = nullptr;
     SettingsDlg* settingsDlg = nullptr;
     ShortcutsDlg* shortcutsDlg = nullptr;
+    ExportDlg* exportDlg = nullptr;
+    ImportDlg* importDlg = nullptr;
     bool newMessages = false;
     // estado dos atalhos na criação da janela (mudar posição/quantidade exige reiniciar)
     bool shortcutsEnabled = false;
@@ -161,8 +171,6 @@ private:
     bool PreTranslateKey(QWidget* window, QKeyEvent* event);
     QMenu* BuildMainMenu();
     void SetTrayIcon(const QIcon& icon, int state);
-    // Libera os dados das mensagens cujos handlers ainda não foram portados.
-    void FreeUnhandledMessage(UINT msg, WPARAM wParam, LPARAM lParam);
 
     QtMessageBackend* m_backend;
     QTabBar* m_mainTab = nullptr;

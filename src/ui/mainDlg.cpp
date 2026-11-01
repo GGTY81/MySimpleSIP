@@ -32,12 +32,15 @@
 #include "Transfer.h"
 #include "SettingsDlg.h"
 #include "ShortcutsDlg.h"
+#include "ExportDlg.h"
+#include "ImportDlg.h"
 #include "UiCommon.h"
 #include "langpack.h"
 
 #include <QApplication>
 #include <QClipboard>
 #include <QDir>
+#include <QFileDialog>
 #include <QHeaderView>
 #include <QKeyEvent>
 #include <QTemporaryFile>
@@ -613,6 +616,12 @@ QMenu* CmainDlg::BuildMainMenu()
             }
             else if (CString(item) == _T("Export Contacts")) {
                 importExportMenu->addAction(TR(item), this, [this] { pageContacts->Export(); }); // OnMenuExportContacts
+            }
+            else if (CString(item) == _T("Export Configuration")) {
+                importExportMenu->addAction(TR(item), this, [this] { OnMenuExport(); });
+            }
+            else if (CString(item) == _T("Import Configuration")) {
+                importExportMenu->addAction(TR(item), this, [this] { OnMenuImport(); });
             }
             else if (CString(item) == _T("Import Contacts")) {
                 importExportMenu->addAction(TR(item), this, [this] { pageContacts->OnMenuImport(); }); // OnMenuImportContacts
@@ -1833,6 +1842,33 @@ void CmainDlg::OnMenuShortcuts()
     }
 }
 
+void CmainDlg::OnMenuExport()
+{
+    if (!exportDlg) {
+        exportDlg = new ExportDlg(this);
+    }
+    else {
+        exportDlg->raise(); // SetForegroundWindow
+        exportDlg->activateWindow();
+    }
+}
+
+void CmainDlg::OnMenuImport()
+{
+    // CFileDialog (Ini Files) → QFileDialog
+    QString file = QFileDialog::getOpenFileName(this, TR(_T("Import Configuration")), QString(), QStringLiteral("Ini Files (*.ini)"));
+    if (!file.isEmpty()) {
+        if (!importDlg) {
+            importDlg = new ImportDlg(this);
+        }
+        else {
+            importDlg->raise();
+            importDlg->activateWindow();
+        }
+        importDlg->Init(CS(file));
+    }
+}
+
 void CmainDlg::OnMuteInput()
 {
     pageDialer->OnBnClickedMuteInput();
@@ -2828,16 +2864,45 @@ void CmainDlg::OnTimer(UINT_PTR TimerVal)
     }
 }
 
-void CmainDlg::FreeUnhandledMessage(UINT msg, WPARAM wParam, LPARAM lParam)
+LRESULT CmainDlg::onPager(WPARAM wParam, LPARAM lParam)
 {
-    switch (msg) {
-    case UM_ON_PAGER:
-    case UM_ON_PAGER_STATUS:
-        delete reinterpret_cast<CString*>(wParam);
-        delete reinterpret_cast<CString*>(lParam);
-        break;
-    default:
-        break;
+    CString* number = (CString*)wParam;
+    CString* message = (CString*)lParam;
+    MessagesIncoming(number, message);
+    delete number;
+    delete message;
+    return 0;
+}
+
+LRESULT CmainDlg::onPagerStatus(WPARAM wParam, LPARAM lParam)
+{
+    CString* number = (CString*)wParam;
+    CString* message = (CString*)lParam;
+    bool doNotShowMessagesWindow = !isVisible();
+    MessagesContact* messagesContact = messagesDlg->AddTab(*number,
+        FALSE, NULL, NULL,
+        doNotShowMessagesWindow);
+    if (messagesContact) {
+        messagesDlg->AddMessage(messagesContact, *message);
+    }
+    delete number;
+    delete message;
+    return 0;
+}
+
+void CmainDlg::MessagesIncoming(CString* number, CString* message, CTime* pTime)
+{
+    bool doNotShowMessagesWindow = !isVisible();
+    if (doNotShowMessagesWindow) {
+        newMessages = true;
+    }
+    MessagesContact* messagesContact = messagesDlg->AddTab(*number,
+        FALSE, NULL, NULL,
+        doNotShowMessagesWindow
+    );
+    if (messagesContact) {
+        messagesDlg->AddMessage(messagesContact, *message, MSIP_MESSAGE_TYPE_REMOTE, FALSE, pTime);
+        onPlayerPlay(MSIP_SOUND_MESSAGE_IN, 0);
     }
 }
 
@@ -2882,13 +2947,14 @@ LRESULT CmainDlg::WindowProc(UINT msg, WPARAM wParam, LPARAM lParam)
         return onUsersDirectoryLoaded(wParam, lParam);
     case UM_RESTART:
         return OnRestart(wParam, lParam);
+    case UM_ON_PAGER:
+        return onPager(wParam, lParam);
+    case UM_ON_PAGER_STATUS:
+        return onPagerStatus(wParam, lParam);
     case WM_TIMER:
         OnTimer(wParam);
         return 0;
     default:
-        // MySimpleSIP: handlers ainda não portados (transferência, mensagens SIP) só
-        // liberam a memória
-        FreeUnhandledMessage(msg, wParam, lParam);
         return 0;
     }
 }

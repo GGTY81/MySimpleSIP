@@ -19,6 +19,7 @@
 // Comandos: call <número> | answer | hangup | hold | unhold | dtmf <dígitos> |
 //           online (publica presença "online" em todas as contas — PublishStatus) |
 //           devices (lista os dispositivos de áudio e os padrões) |
+//           message <número> <texto> (envia mensagem SIP — pjsua_im_send) |
 //           status | wait <segundos> | quit
 
 #include "mainDlgCore.h"
@@ -207,6 +208,32 @@ public:
         out("[saída] chamando %s (chamada %d)", utf8(uri).GetString(), callId);
     }
 
+    void Message(const CString& number, const CString& text)
+    {
+        CString n = number;
+        CString commands;
+        CString uri = FormatNumber(n, &commands);
+        pjsua_acc_id acc;
+        pj_str_t pjUri;
+        if (!SelectSIPAccount(uri, acc, &pjUri)) {
+            out("[erro] nenhuma conta disponível");
+            return;
+        }
+        pj_pool_t* pool = nullptr;
+        pjsua_msg_data msgData;
+        msip_msg_data_init(pool, acc, msgData);
+        char* buf = MSIP::WideCharToPjStr(text);
+        pj_str_t content = pj_str(buf);
+        pj_status_t st = pjsua_im_send(acc, &pjUri, NULL, &content, &msgData, NULL);
+        free(pjUri.ptr);
+        free(buf);
+        pj_pool_safe_release(&pool);
+        if (st != PJ_SUCCESS) {
+            CString descr;
+            out("[erro] mensagem: %s", utf8(MSIP::GetErrorMessage(st, descr)).GetString());
+        }
+    }
+
     pjsua_call_id FirstCall()
     {
         pjsua_call_id ids[PJSUA_MAX_CALLS];
@@ -257,6 +284,10 @@ private:
         out("> %s", line.toUtf8().constData());
         if (cmd == QLatin1String("call")) {
             m_dlg.Call(carg);
+        } else if (cmd == QLatin1String("message")) {
+            const QString number = arg.section(QLatin1Char(' '), 0, 0);
+            const QString text = arg.section(QLatin1Char(' '), 1);
+            m_dlg.Message(CString(number.toStdWString()), CString(text.toStdWString()));
         } else if (cmd == QLatin1String("devices")) {
             pjmedia_aud_dev_info info[PJMEDIA_AUD_MAX_DEVS];
             unsigned count = PJMEDIA_AUD_MAX_DEVS;

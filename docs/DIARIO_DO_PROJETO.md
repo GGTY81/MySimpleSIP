@@ -7,13 +7,13 @@
 
 | Campo | Valor |
 |---|---|
-| Versão vigente | **0.5.3** (ver arquivo `VERSION`) |
-| Fase | 6 — Configurações e mensagens (→ 0.6.0), em andamento. Fases 0 a 5 concluídas |
+| Versão vigente | **0.6.0** (ver arquivo `VERSION`) |
+| Fase | 7 — Integração Linux (→ 0.7.0), a iniciar. Fases 0 a 6 concluídas |
 | Base de referência | MicroSIP 3.22.16 (fonte em `reference/MicroSIP-3.22.16/`) + sons/langpacks do binário 3.22.12 (`reference/MicroSIP-3.22.12-assets/`), ambos somente leitura. MicroSIP 3.22.12 instalado no Bottles serve de comparação visual/funcional |
 | Pilha decidida | C++20 · CMake/Ninja · Qt 6 Widgets · pjproject 2.15.1 (mesma versão do binário do MicroSIP; tarball em `third_party/`) · SQLite/SQLiteCpp · QtKeychain · hidapi |
 | Alvo | Ubuntu 26.04 LTS, x86_64, GNOME (Wayland, rodando via XWayland por padrão) |
 | Repositório | https://github.com/GGTY81/MySimpleSIP (público, `main`) |
-| Próxima ação | Fase 6, parte 3: exportar/importar configuração (`ExportDlg`/`ImportDlg`) e chat SIP (`onPager`/`MessagesIncoming`/`UM_ON_PAGER`). Pendente: testes reais do responsável (atalhos com BLF, teclas de atalho, agenda, transferência, gravação) |
+| Próxima ação | Fase 7: comandos de linha (`/answer`, `/hangupall`, URIs `sip:`/`tel:` repassados pela instância única), manipulador `sip:`/`tel:` no `.desktop`, notificações, mudança de rede (`QNetworkInformation` → `IsNetworkChanged`/`PortKnock`/`pjsua_handle_ip_change`), suspensão (logind), teclas de mídia (MPRIS) e fone HID; retirar o ruído do JACK (pjproject sem ALSA). Pendente: testes reais do responsável (atalhos com BLF, teclas de atalho, exportar/importar, chat com o PBX) |
 
 ## Convenções
 
@@ -45,6 +45,7 @@
 | 0.2.1 | 2026-10-30 | Fase 3, parte 1: senhas no chaveiro do sistema (`KeychainPasswordStore`, QtKeychain/Secret Service); janela principal Qt `CmainDlg` (deriva de `CmainDlgCore`): abas, botão de menu, barra de status com ícone, `UpdateWindowText`, bandeja, menu principal, posição/tamanho salvos; `main.cpp` passa a abrir a janela real. |
 | 0.2.2 | 2026-10-30 | Fase 3, parte 2: `CDialogLayout` (monta qualquer `IDD_*` a partir de `dialogs.json`, controles acessados pelo ID do `.rc`); `AccountDlg` portado (nova/editar/excluir conta, conta local, senha no chaveiro); teste de interface offscreen `test_ui`. |
 | 0.2.3 | 2026-10-30 | Fase 3, parte 3: `Dialer` (aba Telefone) portado — teclado, número com histórico, Chamar/Encerrar, volumes/mudo, VU-meter, DTMF, DND/AA/FWD/AC/CONF/REC; controles `CButtonDialer/CButtonEx/CLevelsSliderCtrl`; `CDialogLayout` com controles próprios e `AutoMove/AutoUnmove`; chamadas pela janela com provisórios (`MakeCall/PerformCall`, toque e caixa Atender/Rejeitar). |
+| **0.6.0** | 2026-10-31 | **Fim da Fase 6 (Configurações e mensagens).** Exportar/Importar configuração (`ExportDlg`/`ImportDlg`: contas escolhidas e ordenadas, configurações e atalhos num INI; importação acrescenta contas e reinicia quando traz configurações); senhas fora do INI do perfil ficam ofuscadas no próprio arquivo, sem tocar no chaveiro; mensagens SIP recebidas e falhas de envio na janela de mensagens (`onPager`/`onPagerStatus`/`MessagesIncoming`); comando `message` na CLI de teste; 95 testes. |
 | 0.5.3 | 2026-10-31 | Fase 6, parte 2: **atalhos do discador** — `ShortcutsDlg` (8 atalhos: rótulo, número, tipo de ação, alternância com 2º rótulo/número, presença/BLF; ativar e posição lateral/embaixo), botões no Discador (coluna lateral de 180 px ou linhas de 25 px embaixo, em duas colunas acima de 4), presença e "tocando" piscando nos botões, `CmainDlg::ShortcutAction/ShortcutsRemoveAll/OnRestart` (reinício ao mudar a posição); teclas de atalho do `CBaseDialog` (Ctrl+Tab, Ctrl+M/L/P/S/Q/I/O, F2, F4, F10); 91 testes. |
 | 0.5.2 | 2026-10-31 | Áudio pelo **PulseAudio/PipeWire**: backend próprio do pjmedia (`PulseAudioDev`) com os nomes dos dispositivos do sistema e o "Padrão" seguindo o dispositivo padrão do PipeWire (ex.: fone Bluetooth); ALSA como reserva sem servidor de som; comando `devices` na CLI de teste; 89 testes. |
 | 0.5.1 | 2026-10-31 | Fase 6, parte 1: janela de **Configurações** (`SettingsDlg`) portada com `AAOptionsDlg` (opções do atendimento automático) e `FeatureCodesDlg` (códigos de função) — toque e volume, dispositivos, codecs (habilitar/ordenar), vídeo, portas/rport, DNS SRV, STUN, gravação (pasta, MP3/WAV, automática, botão REC), DTMF, atendimento automático, desvio, recusa, diretório de usuários, ação padrão das listas, opções gerais e inicialização automática (XDG Autostart); salvar recria a sessão do pjsua (`OnRecreate`); 88 testes. |
@@ -317,6 +318,14 @@
 - **Teclas de atalho** (`CBaseDialog::PreTranslateMessage`, filtro no `QApplication` para a janela principal, a de chamadas e as de chamada recebida): Ctrl+Tab/Ctrl+Shift+Tab (abas, só na principal — marcado), Ctrl+M (conta), Ctrl+L (conta local), Ctrl+P (Configurações), Ctrl+S (Atalhos), Ctrl+Q (sair), Ctrl+I/Ctrl+` (mudo do microfone), Ctrl+O (mudo da saída), F2 (atender), F4 (desligar todas), Esc/F10 (foco no botão de menu). Ctrl+W (site) fica de fora enquanto o item não tem endereço.
 - **Testes:** `Shortcuts.ColunaLateralDialogoEAcoes` (coluna lateral, alternância, transferência sem número abre o `Transfer`, Ctrl+S, carga/edição/salvar no INI sem reinício, Ctrl+Tab, Ctrl+O, reinício ao mudar a posição) e `Shortcuts.EmbaixoEmDuasColunas` (7 atalhos em 4 linhas de 25 px abaixo dos volumes). 91 testes no build normal e no ASan/UBSan; interface com SIP real 20/20. Capturas: `docs/layout/atalhos-0.5.3.png` (`MSIP_SCREENSHOT_DIALOG=shortcuts`) e `docs/layout/discador-atalhos-0.5.3.png`.
 
+### 2026-10-31 — Sessão 30: Fase 6, parte 3 — exportar/importar configuração e chat SIP (0.6.0)
+- **Histórico do git reescrito (autorizado pelo responsável):** os 3 primeiros commits, que estavam como `GGTY81 <GGTY81@users.noreply.github.com>`, passaram para Giovanni Grimaldi Torelly <giovannigrimaldi@gmail.com> (`git filter-branch --env-filter`, conteúdo idêntico conferido com `git diff`), envio com `--force-with-lease`; identidade local do repositório ajustada para o mesmo nome e e-mail.
+- **`ExportDlg`/`ImportDlg`** (`IDD_EXPORT`/`IDD_IMPORT`): port com uma base comum `AccountsListsDlg` (no original o código das duas listas, das setas e de Espaço/Delete é repetido nos dois arquivos — mesmos nomes de métodos). Exportar: todas as contas começam selecionadas (o original preenche `IDC_IMPORT_ACCOUNTS`, mesmo valor de `IDC_EXPORT_ACCOUNTS`), ordem da lista define a numeração (conta local mantém o 0), `[Global] version`, `SettingsSave(arquivo)`, `ShortcutsSave(arquivo)`. Importar: contas acrescentadas depois das existentes (ativa a 1ª se o perfil não tinha contas), atalhos substituídos, configurações → reinício (`UM_RESTART`). Diferenças marcadas: arquivo criado em UTF-8 (o original grava BOM UTF-16 para o INI do Windows), `QFileDialog`, `ExportDlg::Export(arquivo)` separado do diálogo de arquivo (usado nos testes). Menu Exportar/Importar → Exportar/Importar configuração ligado; `UiCommon::CreateUpDown` (setas) compartilhado com as Configurações.
+- **Correção nas senhas (`settings.cpp`, marcada):** o chaveiro identifica a senha só pela seção (`Account1`), então salvar/carregar conta em outro arquivo (exportar a conta 3 como `Account1`) sobrescrevia ou lia a senha de outra conta do perfil. Agora o chaveiro só é usado para o INI do perfil; em outros arquivos a senha fica ofuscada (`msip1:`) no próprio arquivo — equivale ao `IniEncrypt` do original, que usa chave fixa. Limitação conhecida: senhas cifradas por um MicroSIP do Windows num INI importado não são decifradas (CryptoAPI não portada) e precisam ser digitadas de novo.
+- **Chat SIP:** `CmainDlg::onPager` (`UM_ON_PAGER` → `MessagesIncoming`: aba do contato, mensagem remota, som de mensagem; com a janela principal escondida, `newMessages` e a janela de mensagens não aparece) e `onPagerStatus` (falha ≥ 300 como mensagem do sistema). `FreeUnhandledMessage` removido (não restam mensagens sem handler). Port knock já estava no núcleo (`PJAccountAdd`); a chamada na mudança de rede fica para a Fase 7.
+- **CLI de teste:** comando `message <número> <texto>` (`pjsua_im_send`).
+- **Testes:** `SettingsTest.OutroArquivoNaoUsaOChaveiro`, `ExportImport.ExportaReordenaEImporta` (listas, setas, Delete/Espaço, arquivo exportado com contas renumeradas e senha ofuscada, importação acrescentando a conta, reinício ao importar configurações), `Chat.MensagemRecebidaEFalhaDeEnvio` e `Chat.TrocaRealDeMensagensComCli` (`MSIP_TEST_SIP=1`: CLI → janela e resposta janela → CLI). 95 testes no build normal e no ASan/UBSan; interface com SIP real 23/23 sob ASan sem avisos. Captura: `docs/layout/exportar-0.6.0.png` (`MSIP_SCREENSHOT_DIALOG=export`, contas fictícias). **Fim da Fase 6.**
+
 ---
 
 ## Ambiente de desenvolvimento verificado (2026-10-30)
@@ -444,14 +453,14 @@ Indisponíveis nos repositórios: `sipp` (usar contêiner com Podman) e `libilbc
 ### Fase 6 — Configurações e mensagens → 0.6.0
 - [x] `SettingsDialog` completo, `AAOptionsDialog`, `FeatureCodesDialog` (0.5.1).
 - [x] `ShortcutsDialog` + speed-dial com presença dos atalhos e teclas de atalho do menu (0.5.3).
-- [ ] Exportar/importar configuração (`ExportDlg`/`ImportDlg`).
-- [ ] Chat (SIP MESSAGE) na `MessagesWindow`, port knock.
+- [x] Exportar/importar configuração (`ExportDlg`/`ImportDlg`) (0.6.0).
+- [x] Chat (SIP MESSAGE) na janela de mensagens; port knock (no núcleo desde a 0.1.2; na mudança de rede → Fase 7) (0.6.0).
 
 ### Fase 7 — Integração Linux → 0.7.0
 - [~] Instância única (feita na 0.2.4: 2ª execução mostra a 1ª) + comandos de linha (`/minimized` feito; `/exit`, `/reset`, `/answer`, `/hangupall`, `/hold`, `/mic*`, `/speak*`, URIs a fazer).
 - [ ] Handler `sip:`/`tel:`/`callto:` (.desktop), autostart, chaveiro, notificações.
 - [ ] Monitores: rede (netlink/QNetworkInformation), suspensão/sessão (logind), dispositivos de áudio.
-- [ ] Backend de áudio pjmedia PulseAudio/PipeWire.
+- [x] Backend de áudio pjmedia PulseAudio/PipeWire (antecipado na 0.5.2).
 - [ ] Teclas multimídia (MPRIS/D-Bus), headset HID (hidapi + udev).
 - [ ] Tema claro/escuro seguindo o sistema.
 

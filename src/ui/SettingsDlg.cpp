@@ -103,23 +103,7 @@ SettingsDlg::SettingsDlg(QWidget* pParent) : QWidget(pParent, Qt::Dialog)
         }
         if (id == QLatin1String("IDC_SETTINGS_SPIN_MODIFY") || id == QLatin1String("IDC_SETTINGS_SPIN_ORDER")) {
             // msctls_updown32: setas horizontais (habilitar/desabilitar) ou verticais (ordem)
-            const bool horizontal = id == QLatin1String("IDC_SETTINGS_SPIN_MODIFY");
-            auto* w = new QWidget(p);
-            QBoxLayout* l = horizontal ? static_cast<QBoxLayout*>(new QHBoxLayout(w)) : new QVBoxLayout(w);
-            l->setContentsMargins(0, 0, 0, 0);
-            l->setSpacing(0);
-            auto* first = new QToolButton(w);
-            auto* second = new QToolButton(w);
-            first->setObjectName(QStringLiteral("first"));
-            second->setObjectName(QStringLiteral("second"));
-            first->setArrowType(horizontal ? Qt::LeftArrow : Qt::UpArrow);
-            second->setArrowType(horizontal ? Qt::RightArrow : Qt::DownArrow);
-            for (QToolButton* b : {first, second}) {
-                b->setAutoRaise(false);
-                b->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-                l->addWidget(b);
-            }
-            return w;
+            return CreateUpDown(p, id == QLatin1String("IDC_SETTINGS_SPIN_MODIFY"));
         }
         return nullptr;
     };

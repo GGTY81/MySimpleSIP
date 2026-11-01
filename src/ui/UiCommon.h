@@ -40,6 +40,10 @@ QIcon LoadNamedIcon(const QString& name);
 // MySimpleSIP: aviso para funções/diálogos ainda não portados
 void NotYetPorted(QWidget* parent, const QString& what);
 
+// msctls_updown32 dos diálogos com duas listas (codecs, contas): dois QToolButton com
+// objectName "first" (← ou ↑) e "second" (→ ou ↓).
+QWidget* CreateUpDown(QWidget* parent, bool horizontal);
+
 // Fonte dos diálogos: equivalente em tamanho à "MS Sans Serif" 8 pt dos .rc (11 px a 96
 // DPI), na família de fonte do sistema, para os controles caberem nas posições originais.
 QFont DialogFont();

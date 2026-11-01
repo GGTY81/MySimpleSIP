@@ -38,7 +38,7 @@ Testes opcionais (usam recursos reais da máquina):
 
 | Variável | Testes | Requisito |
 |---|---|---|
-| `MSIP_TEST_SIP=1` | chamadas, presença, transferência, conferência, gravação e comandos reais pela janela, contra o `msip-cli` | portas UDP 5060, 5070 e 5080 livres |
+| `MSIP_TEST_SIP=1` | chamadas, presença, transferência, conferência, gravação, comandos e mensagens SIP reais pela janela, contra o `msip-cli` | portas UDP 5060, 5070 e 5080 livres |
 | `MSIP_TEST_AUDIO=1` | backend PulseAudio/PipeWire (1 s tocando silêncio e lendo o microfone) | servidor de som |
 | `MSIP_TEST_KEYRING=1` | senha no chaveiro do GNOME | sessão gráfica com chaveiro |
 
@@ -56,11 +56,11 @@ T=$(mktemp -d); XDG_CONFIG_HOME=$T/c XDG_DATA_HOME=$T/d XDG_STATE_HOME=$T/s \
 ```
 
 (`MSIP_SCREENSHOT_DIALOG`: vazio = janela principal, `account`, `messages`, `ringin`,
-`contact`, `transfer`, `settings`, `shortcuts`.)
+`contact`, `transfer`, `settings`, `shortcuts`, `export`.)
 
 A CLI de teste do núcleo (`build/src/cli/msip-cli`) faz chamadas sem interface — veja o
 comentário no topo de `src/cli/msip_cli.cpp` (comandos `call`, `answer`, `hangup`, `hold`,
-`dtmf`, `online`, `devices`, `status`, `wait`, `quit`).
+`dtmf`, `message`, `online`, `devices`, `status`, `wait`, `quit`).
 
 ## Estrutura
 

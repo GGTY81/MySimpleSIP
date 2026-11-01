@@ -246,6 +246,33 @@ TEST_F(SettingsTest, SenhaEmTextoPuroEhMigrada)
     EXPECT_EQ(ini(_T("Account1"), _T("password")), _T(""));
 }
 
+TEST_F(SettingsTest, OutroArquivoNaoUsaOChaveiro)
+{
+    // exportar/importar configuração: a senha vai ofuscada no arquivo e o chaveiro do
+    // perfil não é tocado (ele identifica a senha só pela seção)
+    MemoryPasswordStore store;
+    SetPasswordStore(&store);
+    accountSettings.Init();
+    store.items[_T("Account1")] = _T("senha-da-conta-1");
+    Account a;
+    a.domain = _T("d");
+    a.username = _T("u");
+    a.password = _T("senha-da-conta-3");
+    a.rememberPassword = true;
+    const CString other = CString((root / "export.ini").wstring().c_str());
+    accountSettings.AccountSave(1, &a, other);
+    EXPECT_EQ(store.items[_T("Account1")], _T("senha-da-conta-1"));
+    CString stored;
+    GetPrivateProfileString(_T("Account1"), _T("password"), NULL, stored.GetBuffer(256), 256, other);
+    stored.ReleaseBuffer();
+    EXPECT_EQ(stored, PasswordObfuscate(_T("senha-da-conta-3")));
+
+    Account b;
+    ASSERT_TRUE(accountSettings.AccountLoad(1, &b, other));
+    EXPECT_EQ(b.password, _T("senha-da-conta-3"));
+    EXPECT_EQ(store.items[_T("Account1")], _T("senha-da-conta-1"));
+}
+
 TEST(PasswordObfuscation, Roundtrip)
 {
     for (const CString& p : {CString(), CString(_T("a")), CString(_T("ab")), CString(_T("abc")),

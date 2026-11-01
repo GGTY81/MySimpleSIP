@@ -44,13 +44,22 @@ static bool IniSectionExists(const CString& section, const CString& iniFile)
     return result;
 }
 
+// MySimpleSIP: o chaveiro guarda a senha pela seção ("Account1"), então só vale para o INI
+// do perfil. Em outros arquivos (exportar/importar configuração) a senha fica ofuscada no
+// próprio arquivo, como o IniEncrypt do original (chave fixa) — senão exportar a conta 3
+// como Account1 sobrescreveria no chaveiro a senha da conta 1 do perfil.
+static IPasswordStore* PasswordStoreFor(const CString& filename)
+{
+    return filename == accountSettings.iniFile ? GetPasswordStore() : nullptr;
+}
+
 // MySimpleSIP: substitui IniDecrypt/IniEncrypt (CryptoAPI). Ver PasswordStore.h.
 // Lê a senha da conta: chaveiro, "msip1:" ofuscado ou texto puro (migrado no ato).
 static void PasswordLoad(const CString& section, Account* account, const CString& filename)
 {
     CString stored = account->password;
     account->password.Empty();
-    IPasswordStore* store = GetPasswordStore();
+    IPasswordStore* store = PasswordStoreFor(filename);
     if (stored.IsEmpty()) {
         if (store) {
             store->Load(section, account->password);
@@ -76,7 +85,7 @@ static void PasswordLoad(const CString& section, Account* account, const CString
 // Grava a senha: no chaveiro (INI vazio) ou, sem chaveiro, ofuscada no INI.
 static void PasswordSave(const CString& section, const CString& password, const CString& filename)
 {
-    IPasswordStore* store = GetPasswordStore();
+    IPasswordStore* store = PasswordStoreFor(filename);
     if (password.IsEmpty()) {
         if (store) {
             store->Remove(section);

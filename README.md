@@ -10,7 +10,7 @@
 
 <p align="center"><img src="docs/layout/janela-principal-0.5.2.png" alt="Janela principal do MySimpleSIP: discador" width="243"></p>
 
-> **Situação: versão de desenvolvimento (0.5.x).** O aplicativo já é usado em chamadas reais,
+> **Situação: versão de desenvolvimento (0.6.x).** O aplicativo já é usado em chamadas reais,
 > mas ainda não chegou à versão estável 1.0.0. Até lá não há pacote pronto: a instalação é
 > pela compilação do código-fonte (≈ 10 minutos, passo a passo abaixo). Na 1.0.0 será
 > publicado um pacote `.deb` na página de [Releases](https://github.com/GGTY81/MySimpleSIP/releases).
@@ -35,6 +35,8 @@
 - Janela de Configurações completa (áudio, codecs, rede, gravação, atendimento, etc.).
 - Atalhos de discagem rápida no discador (coluna lateral ou embaixo), com alternância e
   presença/BLF, e as teclas de atalho do MicroSIP (Ctrl+P, Ctrl+S, F2, F4...).
+- Mensagens SIP (chat) na janela de mensagens e exportar/importar configuração (contas,
+  configurações e atalhos) em arquivo INI.
 - Áudio pelo PipeWire/PulseAudio: os dispositivos aparecem com os nomes do sistema e o
   "Padrão" segue o dispositivo padrão do GNOME (inclusive fones Bluetooth).
 - Ícone na bandeja, instância única, senhas guardadas no chaveiro do GNOME, interface em
@@ -42,7 +44,6 @@
 
 **Em andamento** (veja o [plano](docs/ANALISE_E_PLANO.md))
 
-- Exportar/importar configuração e mensagens SIP (chat) — Fase 6.
 - Integração com o sistema (teclas de mídia, fones USB HID, mudança de rede, links `sip:`) — Fase 7.
 - Vídeo — Fase 8. Pacote `.deb` e Release — Fase 9 (versão 1.0.0).
 

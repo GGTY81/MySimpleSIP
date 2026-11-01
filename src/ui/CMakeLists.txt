@@ -15,6 +15,9 @@ add_library(msip_ui STATIC
     AAOptionsDlg.cpp
     FeatureCodesDlg.cpp
     ShortcutsDlg.cpp
+    AccountsListsDlg.cpp
+    ExportDlg.cpp
+    ImportDlg.cpp
     RinginDlg.cpp
 )
 target_include_directories(msip_ui PUBLIC

@@ -29,6 +29,7 @@
 #include "Transfer.h"
 #include "SettingsDlg.h"
 #include "ShortcutsDlg.h"
+#include "ExportDlg.h"
 #include "mainDlg.h"
 
 #include "Paths.h"
@@ -122,7 +123,7 @@ int main(int argc, char* argv[])
         // MSIP_SCREENSHOT_DIALOG=account captura o diálogo de conta (nova conta);
         // =messages, a janela de chamadas com uma aba de exemplo; =ringin, a de chamada recebida;
         // =contact, o diálogo de contato; =transfer, o de transferência;
-        // =settings, as Configurações; =shortcuts, os Atalhos
+        // =settings, as Configurações; =shortcuts, os Atalhos; =export, Exportar configuração
         const QByteArray which = qgetenv("MSIP_SCREENSHOT_DIALOG");
         QTimer::singleShot(2500, dlg, [dlg, file, which] {
             QWidget* target = dlg;
@@ -169,6 +170,10 @@ int main(int argc, char* argv[])
             else if (which == "shortcuts") {
                 dlg->OnMenuShortcuts();
                 target = dlg->shortcutsDlg;
+            }
+            else if (which == "export") {
+                dlg->OnMenuExport();
+                target = dlg->exportDlg;
             }
             else if (which == "ringin") {
                 auto* r = new RinginDlg(dlg, false);
