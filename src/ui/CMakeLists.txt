@@ -9,6 +9,7 @@ add_library(msip_ui STATIC
     MessagesDlg.cpp
     Calls.cpp
     Contacts.cpp
+    AboutDlg.cpp
     AddDlg.cpp
     Transfer.cpp
     SettingsDlg.cpp

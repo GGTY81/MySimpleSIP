@@ -34,7 +34,7 @@ if(MSIP_INSTALL_UDEV)
 endif()
 
 # documentação em /usr/share/doc/<pacote>, como no Debian
-install(FILES "${PROJECT_SOURCE_DIR}/COPYING" "${PROJECT_SOURCE_DIR}/README.md"
+install(FILES "${PROJECT_SOURCE_DIR}/COPYING" "${PROJECT_SOURCE_DIR}/README.md" "${PROJECT_SOURCE_DIR}/docs/MANUAL.md"
         DESTINATION "${CMAKE_INSTALL_DATADIR}/doc/mysimplesip")
 
 # ---------------------------------------------------------------- CPack (.deb)

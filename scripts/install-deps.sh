@@ -10,7 +10,7 @@ fi
 
 PACKAGES=(
     # ferramentas
-    build-essential cmake ninja-build pkg-config git wget xz-utils bzip2 ca-certificates
+    build-essential cmake ninja-build pkg-config git curl wget patch xz-utils bzip2 ca-certificates
     # Qt 6
     qt6-base-dev qt6-base-dev-tools qt6-tools-dev qt6-tools-dev-tools qt6-l10n-tools qtkeychain-qt6-dev
     # SIP / segurança

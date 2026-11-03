@@ -67,13 +67,13 @@
 #define _GLOBAL_SETT_AA_DEFAULT "button"
 
 // MySimpleSIP: nada do microsip.org; site, ajuda e atualizações ficam no repositório público
-// do projeto (as atualizações pela API de Releases do GitHub). _GLOBAL_HELP_WEBSITE fica vazio:
-// os links "?" dos diálogos apontam para âncoras da ajuda do MicroSIP, que não existem aqui.
+// do projeto (as atualizações pela API de Releases do GitHub). Ajuda e links "?" dos diálogos
+// abrem o manual (docs/MANUAL.md), com uma âncora por campo (OpenHelp).
 #define _GLOBAL_MENU_WEBSITE "https://github.com/GGTY81/MySimpleSIP"
 #define _GLOBAL_MENU_DOWNLOADS "https://github.com/GGTY81/MySimpleSIP/releases"
 #define _GLOBAL_MENU_ISSUES "https://github.com/GGTY81/MySimpleSIP/issues"
-#define _GLOBAL_MENU_HELP "https://github.com/GGTY81/MySimpleSIP/blob/main/docs/INSTALACAO.md"
-#define _GLOBAL_HELP_WEBSITE ""
+#define _GLOBAL_MENU_HELP "https://github.com/GGTY81/MySimpleSIP/blob/main/docs/MANUAL.md"
+#define _GLOBAL_HELP_WEBSITE _GLOBAL_MENU_HELP
 #define _GLOBAL_URL_CHECK_VERSION "https://api.github.com/repos/GGTY81/MySimpleSIP/releases/latest"
 #define _GLOBAL_TECH_DETAILS
 

@@ -85,7 +85,7 @@ TEST(SettingsDlg, CarregaEditaSalvaERecria)
         EXPECT_EQ(L.Combo(QStringLiteral("IDC_SETTINGS_DENY_INCOMING"))->count(), 7);
         EXPECT_EQ(L.Combo(QStringLiteral("IDC_SETTINGS_MICROPHONE"))->itemText(0), TR(_T("Default")));
         EXPECT_FALSE(L.Item(QStringLiteral("IDC_SETTINGS_DEFAULT"))->isEnabled()); // toque vazio
-        EXPECT_TRUE(L.Item(QStringLiteral("IDC_SETTINGS_HELP_RINGTONE"))->isHidden());
+        EXPECT_FALSE(L.Item(QStringLiteral("IDC_SETTINGS_HELP_RINGTONE"))->isHidden()); // "?" → manual
         // codecs: padrão = PCMA e PCMU habilitados (_GLOBAL_CODECS_ENABLED)
         auto* enabled = static_cast<QListWidget*>(L.Item(QStringLiteral("IDC_SETTINGS_AUDIO_CODECS")));
         auto* all = static_cast<QListWidget*>(L.Item(QStringLiteral("IDC_SETTINGS_AUDIO_CODECS_ALL")));

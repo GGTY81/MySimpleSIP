@@ -147,7 +147,7 @@ void AccountDlg::OnInitDialog()
     QObject::connect(m_layout.Edit(QStringLiteral("IDC_EDIT_PASSWORD")), &QLineEdit::textChanged, this,
                      [this] { OnChangePassword(); });
 
-    // links "?" de ajuda (OnNMClickSyslink*): abrem a ajuda online na seção do campo
+    // links "?" de ajuda (OnNMClickSyslink*): abrem o manual na seção do campo
     static const struct {
         const char* id;
         LPCTSTR code;
@@ -166,12 +166,8 @@ void AccountDlg::OnInitDialog()
         QLabel* link = m_layout.Label(QString::fromLatin1(h.id));
         if (!link)
             continue;
-        // MySimpleSIP: sem site de ajuda definido (_GLOBAL_HELP_WEBSITE vazio), os "?" ficam ocultos
-        if (!*_T(_GLOBAL_HELP_WEBSITE)) {
-            link->hide();
-            continue;
-        }
         LPCTSTR code = h.code;
+        link->setProperty("msipHelpCode", QS(code)); // MySimpleSIP: conferido nos testes
         QObject::connect(link, &QLabel::linkActivated, this, [code] { OpenHelp(code); });
     }
 }

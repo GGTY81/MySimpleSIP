@@ -149,7 +149,7 @@ TEST(Shortcuts, ColunaLateralDialogoEAcoes)
         EXPECT_FALSE(L.Item(QStringLiteral("IDC_SHORTCUTS_EDIT_SHORTCUT_LABEL2+1"))->isHidden());
         EXPECT_FALSE(L.Item(QStringLiteral("IDC_SHORTCUTS_LABEL2"))->isHidden());
         EXPECT_TRUE(L.Item(QStringLiteral("IDC_SHORTCUTS_EDIT_SHORTCUT_LABEL2+0"))->isHidden());
-        EXPECT_TRUE(L.Item(QStringLiteral("IDC_SHORTCUTS_SYSLINK_TYPE"))->isHidden());
+        EXPECT_FALSE(L.Item(QStringLiteral("IDC_SHORTCUTS_SYSLINK_TYPE"))->isHidden()); // "?" → manual
 
         // edição: renomeia o 1º, desliga a alternância do 2º e muda o 3º para mensagem
         // sem número (descartado ao salvar)

@@ -7,13 +7,13 @@
 
 | Campo | Valor |
 |---|---|
-| Versão vigente | **0.9.1** (ver arquivo `VERSION`) |
-| Fase | 10 — Paridade (→ 1.0.0), em andamento: auditoria do port concluída; faltam os testes reais e a comparação com o MicroSIP. Fases 0 a 9 concluídas |
+| Versão vigente | **1.0.0** (ver arquivo `VERSION`) |
+| Fase | Fases 0 a 10 concluídas: 1.0.0 publicada (tag `v1.0.0` e Release com o `.deb`) |
 | Base de referência | MicroSIP 3.22.16 (fonte em `reference/MicroSIP-3.22.16/`) + sons/langpacks do binário 3.22.12 (`reference/MicroSIP-3.22.12-assets/`), ambos somente leitura. MicroSIP 3.22.12 instalado no Bottles serve de comparação visual/funcional |
 | Pilha decidida | C++20 · CMake/Ninja · Qt 6 Widgets · pjproject 2.15.1 (mesma versão do binário do MicroSIP; tarball em `third_party/`) · SQLite/SQLiteCpp · QtKeychain · hidapi |
 | Alvo | Ubuntu 26.04 LTS, x86_64, GNOME (Wayland, rodando via XWayland por padrão) |
 | Repositório | https://github.com/GGTY81/MySimpleSIP (público, `main`) |
-| Próxima ação | Fase 10, com o responsável: testes reais e comparação lado a lado com o MicroSIP (Bottles), corrigindo o que aparecer; depois, tag `v1.0.0` e Release com o `.deb` (publicar só com a aprovação dele). Pendente: instalar o `.deb` num Ubuntu 26.04 limpo (o contêiner não roda no ambiente de desenvolvimento); testes reais do responsável (videochamada com a câmera e um softphone/PBX, fone USB HID com a regra do udev, teclas de mídia/fone Bluetooth em chamada, tema escuro, suspensão e troca de rede, atalhos com BLF, exportar/importar, chat com o PBX); decisão sobre `IDT_TIMER_VERSION` (servidor de atualizações) |
+| Próxima ação | Manutenção da série 1.x: corrigir o que os usuários relatarem (issues). Ainda não verificados na prática pelo responsável: mensagens SIP, conferência e videochamada com outro softphone, fone USB HID, `.deb` num Ubuntu 26.04 limpo. Depois da 1.0.0: Flatpak/AppImage (decisão pendente) |
 
 ## Convenções
 
@@ -45,6 +45,7 @@
 | 0.2.1 | 2026-10-30 | Fase 3, parte 1: senhas no chaveiro do sistema (`KeychainPasswordStore`, QtKeychain/Secret Service); janela principal Qt `CmainDlg` (deriva de `CmainDlgCore`): abas, botão de menu, barra de status com ícone, `UpdateWindowText`, bandeja, menu principal, posição/tamanho salvos; `main.cpp` passa a abrir a janela real. |
 | 0.2.2 | 2026-10-30 | Fase 3, parte 2: `CDialogLayout` (monta qualquer `IDD_*` a partir de `dialogs.json`, controles acessados pelo ID do `.rc`); `AccountDlg` portado (nova/editar/excluir conta, conta local, senha no chaveiro); teste de interface offscreen `test_ui`. |
 | 0.2.3 | 2026-10-30 | Fase 3, parte 3: `Dialer` (aba Telefone) portado — teclado, número com histórico, Chamar/Encerrar, volumes/mudo, VU-meter, DTMF, DND/AA/FWD/AC/CONF/REC; controles `CButtonDialer/CButtonEx/CLevelsSliderCtrl`; `CDialogLayout` com controles próprios e `AutoMove/AutoUnmove`; chamadas pela janela com provisórios (`MakeCall/PerformCall`, toque e caixa Atender/Rejeitar). |
+| **1.0.0** | 2026-11-03 | **Fim da Fase 10 (Paridade) — versão estável.** Botões de estado do discador (DND, AA, AC, FWD, CONF, REC) com fundo colorido quando ligados (o CONF fica azul durante a conferência); manual completo do usuário (`docs/MANUAL.md`) e links "?" dos diálogos Conta, Configurações e Atalhos abrindo o manual na seção do campo; diálogo **Sobre** com a versão e os créditos (autor do port, MicroSIP original, bibliotecas, licença); `build.sh`/`build-deb.sh` não terminam mais calados numa pasta recém-clonada (o `ls \| head` com `pipefail`), download do pjproject à prova de interrupção e `curl`/`patch` nas dependências; sem telemetria; 115 testes. |
 | 0.9.1 | 2026-11-03 | Fase 10, parte 1: **auditoria de paridade** — "Visitar site" (Ctrl+W) e "Ajuda" abrindo o repositório e o guia do usuário; verificação de atualizações pela última Release do GitHub (`CheckUpdates`/`OnUpdateCheckerLoaded`, comparação numérica de versões, só a página do projeto); clique no balão de site; `WM_WTSSESSION_CHANGE` pela propriedade `Active` da sessão no logind (refaz os dispositivos); 114 testes. |
 | **0.9.0** | 2026-11-01 | **Fim da Fase 9 (Polimento e empacotamento).** Pacote `.deb` pelo CPack (`scripts/build-deb.sh`, `cmake/Packaging.cmake`: executável, verificador do fone HID em `/usr/libexec`, sons e langpacks, `.desktop`, ícones hicolor, metainfo do AppStream validado, regra do udev aplicada pelo `postinst`; dependências pelo `dpkg-shlibdeps`, todas no main/universe do 26.04); ícone próprio do aplicativo e da bandeja (`resources/brand/`, no lugar do logotipo do MicroSIP); caminho dos sons pelo prefixo de instalação; 112 testes. |
 | **0.8.0** | 2026-11-01 | **Fim da Fase 8 (Vídeo).** Renderizador de vídeo próprio do pjmedia com janelas Qt (`VideoWindow`, no lugar do SDL, que no Wayland não pode ser encaixado em outra janela): vídeo remoto em janela própria redimensionável, quadros em BGRA convertidos pelo pjmedia; `Preview` portado (prévia "Vídeo local" com a janela do renderizador encaixada, como o `SetParent` do original), botão Visualizar das Configurações e fechamento da prévia ao fim da última chamada; captura V4L2 e codecs H.264/H.263/VP8/VP9 do pjproject; CLI de teste com vídeo (`--video`, `videocall`, `video`) e correção do `quit` antes do laço de eventos; 111 testes. |
@@ -375,6 +376,16 @@
 - **Testes:** `Parity.ComparacaoDeVersoes` e `Parity.AtualizacoesSiteESessao` (respostas simuladas da API: mais nova, mesma, fora do projeto, 404, JSON quebrado; menu com site e ajuda ativos; só `Active=true` conta como sessão reativada). 114 testes no build normal e no ASan/UBSan.
 - **Por que não 1.0.0 ainda:** o critério da fase é paridade verificada (videochamada com outro softphone, PBX real, comparação lado a lado com o MicroSIP no Bottles) e instalação limpa do `.deb`; isso depende do responsável. A Release só será publicada com a aprovação dele.
 
+### 2026-11-03 — Sessão 37: Fase 10, parte 2 — retorno dos testes e versão 1.0.0
+- **Retorno do responsável:** gravação gera os `.mp3`, mas não dava para ver se o botão REC estava ligado; transferência testada e funcionando. Não testados: mensagens, conferência e videochamada. Decisão dele: corrigidos os pontos abaixo, o projeto é a 1.0.0 (já substitui o MicroSIP no uso dele).
+- **Instalação de um amigo dele (mesmo notebook, Ubuntu 26.04):** o `./build.sh` terminava sem mensagem nenhuma numa pasta recém-clonada. Causa: `PJ_SRC=$(ls -d …/pjproject-*/ | head -1)` com `set -euo pipefail` — sem as fontes extraídas, o `ls` falha e o `pipefail` encerra o script. Trocado por um laço com teste de diretório (também no `build-deb.sh`); o `build-pjproject.sh` baixa num `.part` (download interrompido não fica no lugar do arquivo), apaga o arquivo corrompido quando o SHA-256 não confere e refaz extrações incompletas; `curl` e `patch` entraram no `install-deps.sh` (o `curl` não vem no Ubuntu desktop). Verificado com uma cópia limpa dos arquivos versionados: baixou, compilou o pjproject e o aplicativo do zero.
+- **Botões de estado** (`SetStateButtonColor`/`SetStateButtonActive` em `UiCommon`): no Windows o `BS_PUSHLIKE` afundado mostra o estado; no Qt/GNOME a diferença era sutil. Ligados, ficam com fundo colorido e texto branco em negrito: DND laranja, AA/AC verde, FWD azul, REC vermelho (gravando). O CONF não alterna (abre o menu de conferência); `Dialer::UpdateConfActive` (no temporizador do medidor de nível, que roda enquanto há chamadas) o deixa azul com duas ou mais chamadas atendidas em conferência.
+- **Manual e links "?":** `docs/MANUAL.md` (uso completo: chamadas, transferência, conferência, gravação, vídeo, mensagens, contatos, atalhos, todos os campos da Conta e das Configurações, fone HID, teclado, linha de comando, arquivos, solução de problemas) com âncoras `<a name>` nos códigos do `OpenHelp` original em minúsculas. `_GLOBAL_HELP_WEBSITE` = `_GLOBAL_MENU_HELP` = o manual no GitHub; `HelpURL()` monta o endereço; os 18 links da Conta, 23 das Configurações e 3 dos Atalhos voltaram a aparecer, com a tabela de códigos do original (o "?" de DNS SRV e de relatório de falhas não existe no `IDD_SETTINGS` do 3.22.16).
+- **Sobre** (`AboutDlg`, novo; não existe no MicroSIP): ícone, versão, autor do port, MicroSIP 3.22.16 © 2011-2026 MicroSIP, tradutor do langpack (se houver), PJSIP/Qt com as versões em uso e demais bibliotecas, aviso da GPL e links do projeto, do manual e da licença; item **Sobre** no menu, depois de Ajuda. Textos novos traduzidos no fim do langpack pt-BR.
+- **Telemetria:** confirmado que não há nenhuma (o `Statistics` e o relatório de falhas nunca foram portados; `crashReport` fica 0). A única conexão fora do SIP é a verificação de versão nas Releases.
+- **Testes:** `HelpAbout.LinksSobreEBotoes` (links visíveis e com âncora existente no manual, Sobre com os créditos e instância única, cores dos botões ligados/desligados, CONF); dois testes antigos que esperavam os "?" ocultos ajustados. 115 testes no build normal e no ASan/UBSan.
+- **Documentação:** README (1.0.0, instalação pelo `.deb`, manual), INSTALACAO (pacote das Releases primeiro, atualização, problema do download), manual linkado na Ajuda.
+
 ---
 
 ## Ambiente de desenvolvimento verificado (2026-10-30)
@@ -434,6 +445,9 @@ Indisponíveis nos repositórios: `sipp` (usar contêiner com Podman) e `libilbc
 | 2026-10-30 | INI gravado em UTF-8 sem BOM (lê também UTF-16 do Windows); API `Get/WritePrivateProfileString` reimplementada | Padrão Linux; `settings.cpp` portável quase sem mudanças; importa `MicroSIP.ini` |
 | 2026-10-30 | Portar arquivos do MicroSIP copiando o original e trocando só o necessário, com marcas `// MySimpleSIP:` | Fidelidade e facilidade de comparar com futuras versões do MicroSIP |
 | 2026-10-30 | Links do microsip.org desativados no port (macros vazias) | Produto distinto; decisão pendente sobre site/ajuda/atualização |
+| 2026-11-03 | O repositório é o site oficial: ajuda, "?" (manual `docs/MANUAL.md`), downloads e atualizações apontam para ele; sem telemetria | Decisão do responsável |
+| 2026-11-03 | Diálogo "Sobre" próprio com os créditos do port e do MicroSIP | Pedido do responsável |
+| 2026-11-03 | Botões de estado ligados com fundo colorido | Retorno de teste do responsável (estado do REC invisível) |
 | 2026-10-30 | Langpack escolhido pelo idioma do sistema quando há vários; busca por texto exato | Linux distribui vários idiomas juntos; evita colisões de hash do original |
 | 2026-10-30 | Sem logger próprio: `PJ_LOG` + log de arquivo do pjsua | É o que o MicroSIP faz |
 | 2026-10-30 | Núcleo conversa com a UI por `PostMessage`/`SetTimer` emulados (`IMessageBackend`) e ganchos `CoreHost` | Mantém o código do MicroSIP quase intacto; a UI Qt implementa o backend |
@@ -523,9 +537,9 @@ Indisponíveis nos repositórios: `sipp` (usar contêiner com Podman) e `libilbc
 - [-] Flatpak/AppImage: adiados para depois da 1.0.0 (decisão da sessão 27: `.deb` primeiro).
 
 ### Fase 10 — Paridade → 1.0.0
-- [x] Auditoria do port contra o checklist (ANALISE §3.4) e o código: lacunas fechadas na 0.9.1 (site/ajuda, atualizações, sessão reativada). Não portados por decisão: relatório de falhas e telemetria (`Statistics`, servidor do MicroSIP), aviso de permissão de câmera do Windows, links "?" da ajuda do MicroSIP nos diálogos (âncoras que não existem aqui).
-- [ ] Testes reais com o responsável (PBX, videochamada, fone HID, teclas de mídia, suspensão/rede, `.deb` num sistema limpo) e comparação lado a lado com o MicroSIP 3.22.12 no Bottles.
-- [ ] Tag `v1.0.0` e Release no GitHub com o `.deb` (repositório público desde a sessão 28), com a aprovação do responsável.
+- [x] Auditoria do port contra o checklist (ANALISE §3.4) e o código: lacunas fechadas na 0.9.1 (site/ajuda, atualizações, sessão reativada). Não portados por decisão: relatório de falhas e telemetria (`Statistics`, servidor do MicroSIP), aviso de permissão de câmera do Windows, links "?" da ajuda do MicroSIP nos diálogos (âncoras que não existem aqui) — revisto na 1.0.0: os "?" abrem o manual próprio.
+- [x] Testes reais com o responsável (PBX, chamadas, gravação, transferência): aprovado para a 1.0.0, com os ajustes da sessão 37 (botões de estado, manual e "?", Sobre, `build.sh`). Não verificados por ele: mensagens, conferência e videochamada com outro softphone (cobertos pelos testes automáticos com a CLI).
+- [x] Tag `v1.0.0` e Release no GitHub com o `.deb` (2026-11-03, aprovado pelo responsável).
 
 ---
 

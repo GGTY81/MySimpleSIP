@@ -16,6 +16,8 @@
 #include <QIcon>
 #include <QString>
 
+class QColor;
+class QPushButton;
 class QWidget;
 
 // CString ↔ QString
@@ -54,6 +56,13 @@ QFont DialogFont();
 bool IsDarkTheme();
 // Ícone de glifo escuro (ex.: IDI_DROPDOWN) tingido com a cor do texto no tema escuro.
 QIcon ThemedGlyphIcon(int id);
+
+// MySimpleSIP: botões de estado do discador (DND, AA, AC, FWD, CONF, REC). No Windows o
+// BS_PUSHLIKE afundado já deixa claro que estão ligados; no Qt/GNOME a diferença é sutil,
+// então o botão ligado (checked ou com a propriedade "msipActive") ganha fundo colorido.
+void SetStateButtonColor(QPushButton* button, const QColor& color);
+// Liga/desliga o destaque de um botão não alternável (CONF: conferência em andamento).
+void SetStateButtonActive(QPushButton* button, bool active);
 
 // Unidades de diálogo do Windows (MS Sans Serif 8 pt, 96 DPI) → pixels lógicos do Qt.
 // Ver docs/layout/DIALOGOS.md.

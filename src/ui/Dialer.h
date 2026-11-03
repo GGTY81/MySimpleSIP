@@ -54,6 +54,7 @@ public:
     void SetCheckDND(bool checked);
     void SetCheckREC(bool checked);
     void EnableButtonCONF(bool enabled);
+    void UpdateConfActive();
     void RebuildButtons(bool init = false);
     void RebuildShortcutsRestart();
     void RebuildShortcuts(bool init = false);
@@ -70,6 +71,11 @@ public:
     bool m_hasVoicemail = false;
     QIcon m_hIconHold, m_hIconResume;
     QPushButton* m_ButtonRec = nullptr;
+    QPushButton* m_ButtonDND = nullptr;
+    QPushButton* m_ButtonFWD = nullptr;
+    QPushButton* m_ButtonAA = nullptr;
+    QPushButton* m_ButtonAC = nullptr;
+    QPushButton* m_ButtonConf = nullptr;
     // GetDlgItem(IDC_...) para o MessagesDlg (UpdateHoldButton)
     QPushButton* DlgButton(const QString& id) const { return m_layout.Button(id); }
     QList<QPushButton*> shortcutButtons; // IDC_SHORTCUT_RANGE + i
@@ -125,11 +131,6 @@ private:
     CButtonEx* m_ButtonEnd = nullptr;
     CLevelsSliderCtrl* m_SliderCtrlInput = nullptr;
     CLevelsSliderCtrl* m_SliderCtrlOutput = nullptr;
-    QPushButton* m_ButtonDND = nullptr;
-    QPushButton* m_ButtonFWD = nullptr;
-    QPushButton* m_ButtonAA = nullptr;
-    QPushButton* m_ButtonAC = nullptr;
-    QPushButton* m_ButtonConf = nullptr;
     QIcon m_hIconMuteOutput, m_hIconMutedOutput, m_hIconMuteInput, m_hIconMutedInput;
     CString digitsDTMFDelayed;
     QFont m_font_shortcuts;

@@ -385,11 +385,18 @@ bool SelectSIPAccount(CString number, pjsua_acc_id& acc_id, pj_str_t* pj_uri)
     return true;
 }
 
-void OpenHelp(CString code)
+// MySimpleSIP: âncoras do docs/MANUAL.md em minúsculas (o GitHub as normaliza assim)
+CString HelpURL(CString code)
 {
     CString url = _T(_GLOBAL_HELP_WEBSITE);
     url.Append(_T("#"));
-    MSIP::OpenURL(url + code);
+    code.MakeLower();
+    return url + code;
+}
+
+void OpenHelp(CString code)
+{
+    MSIP::OpenURL(HelpURL(code));
 }
 
 void msip_tonegen_init(call_tonegen_data*& cd, pjsua_call_id call_id, bool inband)

@@ -138,3 +138,16 @@ para `std::wregex` (`src/core/DialPlanRegex.*`).
 - Rode `ctest --test-dir build` (e, se mexer em SIP, os testes com `MSIP_TEST_SIP=1`) antes de
   enviar o *pull request*.
 - Ao concluir uma etapa, registre no `docs/DIARIO_DO_PROJETO.md`.
+- Recurso novo ou mudado para o usuário: atualize o [manual](MANUAL.md). Os links **?** dos
+  diálogos abrem `MANUAL.md#<código>` (o código do `OpenHelp` original em minúsculas, numa
+  âncora `<a name="…"></a>`); o teste `HelpAbout.LinksSobreEBotoes` falha se faltar a âncora.
+- Textos novos da interface são escritos em inglês (`TR(_T("..."))`, como no MicroSIP) e
+  traduzidos no fim de `resources/langpacks/langpack_portuguesebr.txt` (UTF-8 com BOM, CRLF,
+  antes da linha final `[]`).
+
+## Publicar uma versão
+
+1. Atualize `VERSION`, o histórico e o registro de sessões do diário.
+2. `./scripts/build-deb.sh` e confira o pacote (`dpkg-deb -c`/`-I`).
+3. Crie a tag `vX.Y.Z` e a Release no GitHub com o `.deb` anexado: o aviso de versão nova dos
+   aplicativos instalados lê a Release mais recente (`releases/latest`, `tag_name`).

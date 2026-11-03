@@ -24,6 +24,7 @@
 #include <QHash>
 #include <QPainter>
 #include <QPixmap>
+#include <QPushButton>
 
 namespace {
 
@@ -49,6 +50,25 @@ bool IsDarkTheme()
 {
     const QPalette p = QApplication::palette();
     return p.color(QPalette::Window).lightness() < p.color(QPalette::WindowText).lightness();
+}
+
+void SetStateButtonColor(QPushButton* button, const QColor& color)
+{
+    // só o estado ligado tem regra; o desligado continua com o desenho do sistema
+    button->setStyleSheet(QStringLiteral("QPushButton:checked, QPushButton[msipActive=\"true\"] {"
+                                         " background-color: %1; color: white; font-weight: bold;"
+                                         " border: 1px solid %2; border-radius: 3px; }")
+                              .arg(color.name(), color.darker(140).name()));
+}
+
+void SetStateButtonActive(QPushButton* button, bool active)
+{
+    if (button->property("msipActive").toBool() == active) {
+        return;
+    }
+    button->setProperty("msipActive", active);
+    // reaplica a folha de estilo: o seletor de propriedade só é reavaliado assim
+    button->setStyleSheet(button->styleSheet());
 }
 
 QIcon ThemedGlyphIcon(int id)

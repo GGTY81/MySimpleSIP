@@ -280,6 +280,7 @@ void msip_call_hangup_all();
 
 bool msip_snd_is_active();
 
+CString HelpURL(CString code);
 void OpenHelp(CString code);
 
 

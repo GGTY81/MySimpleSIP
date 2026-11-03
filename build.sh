@@ -9,7 +9,11 @@ BUILD_DIR="$ROOT/build"
 
 # pjproject: compila na primeira vez e de novo quando chega um patch ainda não aplicado
 PJ_BASE="$ROOT/third_party/pjproject"
-PJ_SRC=$(ls -d "$PJ_BASE"/pjproject-*/ 2>/dev/null | head -1)
+# (sem "ls | head": com set -e/pipefail, o ls sem fontes ainda baixadas encerrava o script calado)
+PJ_SRC=""
+for d in "$PJ_BASE"/pjproject-*/; do
+    if [[ -d "$d" ]]; then PJ_SRC="$d"; break; fi
+done
 PJ_BUILD=0
 [[ -f "$PJ_BASE/install/lib/pkgconfig/libpjproject.pc" ]] || PJ_BUILD=1
 for p in "$PJ_BASE"/patches/*.patch; do

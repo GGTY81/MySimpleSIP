@@ -17,6 +17,7 @@
 
 #include "mainDlg.h"
 
+#include "AboutDlg.h"
 #include "AccountDlg.h"
 #include "Calls.h"
 #include "Contacts.h"
@@ -688,6 +689,8 @@ QMenu* CmainDlg::BuildMainMenu()
     menu->addAction(TR(_T("Visit Website")) + QStringLiteral("\tCtrl+W"), this, [this] { OnMenuWebsite(); });
     menu->addSeparator();
     menu->addAction(TR(_T("Help")) + QStringLiteral("\tv") + QStringLiteral(_GLOBAL_VERSION), this, [this] { OnMenuHelp(); });
+    // MySimpleSIP: versão e créditos (não existe no original)
+    menu->addAction(TR(_T("About")), this, [this] { OnMenuAbout(); });
 
     menu->addSeparator();
     menu->addAction(TR(_T("Exit")) + QStringLiteral("\tCtrl+Q"), this, [this] { OnMenuExit(); });
@@ -2153,6 +2156,18 @@ void CmainDlg::OnMenuHelp()
 {
     // MySimpleSIP: OpenHelp() abre a ajuda do site do MicroSIP; aqui, o guia do usuário
     MSIP::OpenURL(_T(_GLOBAL_MENU_HELP));
+}
+
+void CmainDlg::OnMenuAbout()
+{
+    if (!aboutDlg) {
+        aboutDlg = new AboutDlg(this);
+        aboutDlg->show();
+    }
+    else {
+        aboutDlg->raise();
+        aboutDlg->activateWindow();
+    }
 }
 
 void CmainDlg::OnSessionChange(UINT nSessionState, UINT /*nId*/)

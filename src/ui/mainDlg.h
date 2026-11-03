@@ -26,8 +26,10 @@
 #include <QHash>
 #include <QIcon>
 #include <QList>
+#include <QPointer>
 #include <QWidget>
 
+class AboutDlg;
 class AccountDlg;
 class Calls;
 class Contacts;
@@ -120,6 +122,7 @@ public:
     // site, ajuda e atualizações (repositório do projeto)
     void OnMenuWebsite();
     void OnMenuHelp();
+    void OnMenuAbout();
     void OnCheckUpdates();
     void CheckUpdates() override;
     LRESULT OnUpdateCheckerLoaded(WPARAM wParam, LPARAM lParam);
@@ -188,6 +191,7 @@ public:
     ShortcutsDlg* shortcutsDlg = nullptr;
     ExportDlg* exportDlg = nullptr;
     ImportDlg* importDlg = nullptr;
+    QPointer<AboutDlg> aboutDlg; // MySimpleSIP: fecha com WA_DeleteOnClose
     bool newMessages = false;
     // estado dos atalhos na criação da janela (mudar posição/quantidade exige reiniciar)
     bool shortcutsEnabled = false;

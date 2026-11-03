@@ -619,4 +619,29 @@ Ocorreu um erro crítico no módulo do seu computador.
 Não foi possível enviar a solicitação de rede.
 [If you don't have your account details, contact your IP telephony provider to obtain them.]
 Caso não possua os dados da sua conta, entre em contato com seu provedor de telefonia IP para obtê-los.
+; MySimpleSIP
+[About]
+Sobre
+[Close]
+Fechar
+[Version]
+Versão
+[Author]
+Autor
+[Based on MicroSIP]
+Baseado no MicroSIP
+[Translation]
+Tradução
+[Libraries]
+Bibliotecas
+[This program is free software, distributed under the GNU General Public License, version 2 or later, WITHOUT ANY WARRANTY.]
+Este programa é software livre, distribuído sob a Licença Pública Geral GNU, versão 2 ou posterior, SEM NENHUMA GARANTIA.
+[Project Page]
+Página do projeto
+[User Manual]
+Manual do usuário
+[License]
+Licença
+[SIP softphone for Linux]
+Softphone SIP para Linux
 []

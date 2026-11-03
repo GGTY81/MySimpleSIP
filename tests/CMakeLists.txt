@@ -75,6 +75,7 @@ qt_add_executable(test_ui
     ui/test_video.cpp
     ui/test_brand.cpp
     ui/test_parity.cpp
+    ui/test_help_about.cpp
     "${PROJECT_SOURCE_DIR}/resources/resources.qrc"
     "${PROJECT_SOURCE_DIR}/resources/layout.qrc"
     "${PROJECT_SOURCE_DIR}/resources/brand.qrc"
@@ -83,6 +84,7 @@ target_include_directories(test_ui PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
 find_package(Qt6 REQUIRED COMPONENTS Test)
 target_link_libraries(test_ui PRIVATE msip_ui Qt6::Test GTest::gtest)
 target_compile_options(test_ui PRIVATE -Wall -Wextra -Wno-reorder)
-target_compile_definitions(test_ui PRIVATE MSIP_CLI_PATH="$<TARGET_FILE:msip-cli>" MSIP_APP_PATH="$<TARGET_FILE:mysimplesip>")
+target_compile_definitions(test_ui PRIVATE MSIP_CLI_PATH="$<TARGET_FILE:msip-cli>" MSIP_APP_PATH="$<TARGET_FILE:mysimplesip>"
+                          MSIP_SOURCE_DIR="${PROJECT_SOURCE_DIR}")
 add_dependencies(test_ui msip-cli mysimplesip)
 gtest_discover_tests(test_ui PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")

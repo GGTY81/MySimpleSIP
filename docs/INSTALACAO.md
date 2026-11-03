@@ -1,12 +1,31 @@
 # Instalação no Ubuntu 26.04 LTS
 
-Este guia instala o MySimpleSIP a partir do código-fonte, no Ubuntu 26.04 LTS (64 bits,
-desktop GNOME). Leva uns 10 minutos, quase todos de compilação automática.
+Este guia instala o MySimpleSIP no Ubuntu 26.04 LTS (64 bits, desktop GNOME). O uso do
+aplicativo está no [manual](MANUAL.md).
 
-> Quando a versão estável 1.0.0 for publicada, haverá um pacote `.deb` na página de
-> [Releases](https://github.com/GGTY81/MySimpleSIP/releases), e a instalação será um único
-> comando (`sudo apt install ./mysimplesip_1.0.0_amd64.deb`). Enquanto isso, siga os passos
-> abaixo.
+## Jeito mais fácil: o pacote `.deb`
+
+1. Baixe o arquivo `mysimplesip_<versão>_amd64.deb` da última versão na página de
+   [Releases](https://github.com/GGTY81/MySimpleSIP/releases).
+2. No Terminal (Ctrl+Alt+T), na pasta onde o arquivo foi salvo (normalmente `Downloads`):
+
+   ```bash
+   cd ~/Downloads
+   sudo apt install ./mysimplesip_*_amd64.deb
+   ```
+
+   O `apt` instala junto as bibliotecas necessárias. Use `./` antes do nome do arquivo: sem
+   isso, o `apt` procura o pacote nos repositórios do Ubuntu e não o encontra.
+3. Abra o **MySimpleSIP** pelo menu de aplicativos e siga para
+   [Configurar a conta SIP](#5-configurar-a-conta-sip).
+
+O pacote já registra os links `sip:`/`tel:`/`callto:` e a regra do fone USB HID. Para remover:
+`sudo apt remove mysimplesip`.
+
+## Pelo código-fonte
+
+Os passos 1 a 4 compilam o MySimpleSIP na sua máquina. Leva uns 10 minutos, quase todos de
+compilação automática.
 
 ## O que você precisa
 
@@ -195,6 +214,9 @@ link em `~/.local/bin`.
 
 ## Atualizar
 
+Com o pacote: baixe o `.deb` da versão nova e instale do mesmo jeito
+(`sudo apt install ./mysimplesip_*_amd64.deb`). Pelo código-fonte:
+
 ```bash
 cd MySimpleSIP
 git pull
@@ -249,6 +271,11 @@ posição salva, rode pelo XWayland: `QT_QPA_PLATFORM=xcb ./build/src/mysimplesi
 
 **O ícone da bandeja não aparece.**
 Verifique se a extensão *Ubuntu AppIndicators* está ativa (aplicativo *Extensões*).
+
+**O `./build.sh` para no download do pjproject.**
+O script baixa o pjproject do GitHub na primeira compilação. Confira a conexão e rode de novo:
+um download incompleto é apagado e refeito sozinho. (Até a versão 0.9.1, o `./build.sh`
+podia terminar sem mensagem nenhuma numa pasta recém-clonada; isso foi corrigido na 1.0.0.)
 
 **Erro ao compilar.**
 Rode de novo `sudo ./scripts/install-deps.sh` (pode faltar alguma dependência nova) e

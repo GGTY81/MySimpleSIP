@@ -11,7 +11,7 @@
 
 // Port de SettingsDlg.cpp (MicroSIP 3.22.16) sobre o IDD_SETTINGS original (CDialogLayout).
 // LISTBOX → QListWidget; botões de setas (msctls_updown32) → dois QToolButton; links "?"
-// da ajuda ocultos enquanto não houver site de ajuda (_GLOBAL_HELP_WEBSITE vazio).
+// da ajuda abrem o manual do projeto (docs/MANUAL.md).
 // Diferenças marcadas com "MySimpleSIP:".
 
 #include "SettingsDlg.h"
@@ -140,10 +140,41 @@ void SettingsDlg::OnInitDialog()
 
     m_layout.TranslateDialog(this);
 
-    // MySimpleSIP: links "?" (OpenHelp) ocultos — _GLOBAL_HELP_WEBSITE ainda vazio
-    for (QWidget* w : findChildren<QWidget*>()) {
-        if (w->objectName().startsWith(QLatin1String("IDC_SETTINGS_HELP_"))) {
-            w->hide();
+    // OnNMClickSyslink*: links "?" para o manual, na seção do campo (DNS SRV e relatório de
+    // falhas não têm "?" no IDD_SETTINGS do 3.22.16)
+    static const struct {
+        const char* id;
+        LPCTSTR code;
+    } helpLinks[] = {
+        {"IDC_SETTINGS_HELP_RINGTONE", _T("ringtone")},
+        {"IDC_SETTINGS_HELP_MIC_AMPLIF", _T("microphoneAmplification")},
+        {"IDC_SETTINGS_HELP_SW_ADJUST", _T("softwareLevelAdjustment")},
+        {"IDC_SETTINGS_HELP_DTMF_METHOD", _T("DTMFMethod")},
+        {"IDC_SETTINGS_HELP_AUTO_ANSWER", _T("autoAnswer")},
+        {"IDC_SETTINGS_HELP_FORWARDING", _T("forwarding")},
+        {"IDC_SETTINGS_HELP_FEATURE_CODES", _T("featureCodes")},
+        {"IDC_SETTINGS_HELP_DENY_INCOMING", _T("denyIncoming")},
+        {"IDC_SETTINGS_HELP_DIRECTORY", _T("directory")},
+        {"IDC_SETTINGS_HELP_STUN_SERVER", _T("stunServer")},
+        {"IDC_SETTINGS_HELP_MEDIA_BUTTONS", _T("handleMediaButtons")}, // o 1º ON_NOTIFY vence
+        {"IDC_SETTINGS_HELP_LOCAL_DTMF", _T("soundEvents")},
+        {"IDC_SETTINGS_HELP_SINGLE_MODE", _T("singleMode")},
+        {"IDC_SETTINGS_HELP_VAD", _T("vad")},
+        {"IDC_SETTINGS_HELP_EC", _T("ec")},
+        {"IDC_SETTINGS_HELP_FORCE_CODEC", _T("forceCodec")},
+        {"IDC_SETTINGS_HELP_VIDEO", _T("video")},
+        {"IDC_SETTINGS_HELP_PORTS", _T("ports")},
+        {"IDC_SETTINGS_HELP_AUDIO_CODECS", _T("audioCodecs")},
+        {"IDC_SETTINGS_HELP_ENABLE_LOG", _T("log")},
+        {"IDC_SETTINGS_HELP_BRING_TO_FRONT", _T("bringToFrontOnIncoming")},
+        {"IDC_SETTINGS_HELP_ANSWER_BOX_RANDOM", _T("randomAnswerBox")},
+        {"IDC_SETTINGS_HELP_DISABLE_LOCAL", _T("enableLocal")},
+    };
+    for (const auto& h : helpLinks) {
+        if (QLabel* link = m_layout.Label(QString::fromLatin1(h.id))) {
+            LPCTSTR code = h.code;
+            link->setProperty("msipHelpCode", QS(code));
+            QObject::connect(link, &QLabel::linkActivated, this, [code] { OpenHelp(code); });
         }
     }
 

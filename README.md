@@ -10,11 +10,9 @@
 
 <p align="center"><img src="docs/layout/janela-principal-0.5.2.png" alt="Janela principal do MySimpleSIP: discador" width="243"></p>
 
-> **Situação: versão de desenvolvimento (0.9.x).** O aplicativo já é usado em chamadas reais,
-> mas ainda não chegou à versão estável 1.0.0. Até lá não há pacote pronto para baixar: a
-> instalação é pela compilação do código-fonte (≈ 10 minutos, passo a passo abaixo), que
-> também pode gerar o pacote `.deb` na sua máquina. Na 1.0.0 o `.deb` será publicado na
-> página de [Releases](https://github.com/GGTY81/MySimpleSIP/releases).
+> **Versão estável 1.0.0.** Paridade com o MicroSIP 3.22.16. Baixe o pacote `.deb` na página
+> de [Releases](https://github.com/GGTY81/MySimpleSIP/releases) ou compile do código-fonte
+> (passo a passo abaixo). O uso está no **[manual](docs/MANUAL.md)**.
 
 ## Recursos
 
@@ -51,13 +49,22 @@
 - Ícone na bandeja, instância única, senhas guardadas no chaveiro do GNOME, interface em
   português (e nos demais idiomas dos langpacks do MicroSIP).
 
-**Em andamento** (veja o [plano](docs/ANALISE_E_PLANO.md))
-
-- Comparação lado a lado com o MicroSIP e Release 1.0.0 com o pacote `.deb` — Fase 10.
+- Botões de estado do discador (DND, AA, AC, FWD, CONF, REC) coloridos quando ligados.
+- Manual completo em português ([docs/MANUAL.md](docs/MANUAL.md)), aberto pelos botões **?**
+  das janelas de configuração, e diálogo **Sobre** com a versão e os créditos.
+- Sem telemetria: a única conexão além do SIP é a verificação de versão nova nas Releases do
+  GitHub (configurável; nenhum dado enviado).
 
 ## Instalação no Ubuntu 26.04
 
-O guia completo, com explicações e solução de problemas, está em
+**Pelo pacote** (recomendado): baixe o `mysimplesip_<versão>_amd64.deb` da página de
+[Releases](https://github.com/GGTY81/MySimpleSIP/releases) e instale:
+
+```bash
+sudo apt install ./mysimplesip_*_amd64.deb
+```
+
+**Pelo código-fonte:** o guia completo, com explicações e solução de problemas, está em
 **[docs/INSTALACAO.md](docs/INSTALACAO.md)**. Resumo:
 
 ```bash
@@ -97,7 +104,7 @@ Arquivos do usuário:
 | Configurações (mesmo formato do `MicroSIP.ini`) | `~/.config/MySimpleSIP/MySimpleSIP.ini` |
 | Contatos, histórico | `~/.local/share/MySimpleSIP/` (`Contacts.xml`, `call_log.db`) |
 | Log do SIP (se habilitado) | `~/.local/state/MySimpleSIP/MySimpleSIP_log.txt` |
-| Gravações | pasta escolhida nas Configurações (padrão: `~/Recordings`) |
+| Gravações | pasta escolhida nas Configurações (padrão: `Recordings` na Área de Trabalho) |
 
 É possível trazer contatos do MicroSIP do Windows copiando o `Contacts.xml` para a pasta acima.
 
@@ -105,6 +112,7 @@ Arquivos do usuário:
 
 | Documento | Conteúdo |
 |---|---|
+| [docs/MANUAL.md](docs/MANUAL.md) | Manual do usuário: chamadas, contatos, conta, todas as configurações, teclado e linha de comando. |
 | [docs/INSTALACAO.md](docs/INSTALACAO.md) | Instalação passo a passo no Ubuntu 26.04, atualização, remoção e problemas comuns. |
 | [docs/DESENVOLVIMENTO.md](docs/DESENVOLVIMENTO.md) | Como compilar para desenvolver, testes, estrutura do código e método de port. |
 | [docs/ANALISE_E_PLANO.md](docs/ANALISE_E_PLANO.md) | Análise do código original, arquitetura e plano de fases. |

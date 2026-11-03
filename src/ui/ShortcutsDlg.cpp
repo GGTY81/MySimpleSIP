@@ -101,10 +101,20 @@ void ShortcutsDlg::OnInitDialog()
     m_layout.Check(QStringLiteral("IDC_SHORTCUTS_ENABLE"))->setChecked(accountSettings.enableShortcuts);
     m_layout.Check(QStringLiteral("IDC_SHORTCUTS_BOTTOM"))->setChecked(accountSettings.shortcutsBottom);
 
-    // MySimpleSIP: links "?" (OpenHelp) ocultos — _GLOBAL_HELP_WEBSITE ainda vazio
-    for (const char* id : {"IDC_SHORTCUTS_SYSLINK_TYPE", "IDC_SHORTCUTS_SYSLINK_TOGGLE", "IDC_SHORTCUTS_SYSLINK_BLF"}) {
-        if (QWidget* w = m_layout.Item(QString::fromLatin1(id))) {
-            w->hide();
+    // OnNMClickSyslinkType/Toggle/BLF: links "?" para o manual
+    static const struct {
+        const char* id;
+        LPCTSTR code;
+    } helpLinks[] = {
+        {"IDC_SHORTCUTS_SYSLINK_TYPE", _T("shortcutType")},
+        {"IDC_SHORTCUTS_SYSLINK_TOGGLE", _T("toggle")},
+        {"IDC_SHORTCUTS_SYSLINK_BLF", _T("BLF")},
+    };
+    for (const auto& h : helpLinks) {
+        if (QLabel* link = m_layout.Label(QString::fromLatin1(h.id))) {
+            LPCTSTR code = h.code;
+            link->setProperty("msipHelpCode", QS(code));
+            QObject::connect(link, &QLabel::linkActivated, this, [code] { OpenHelp(code); });
         }
     }
 

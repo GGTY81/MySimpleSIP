@@ -16,13 +16,29 @@ if [[ "${1:-}" == "--clean" ]]; then
     rm -rf "$SRC" "$PREFIX"
 fi
 
+URL="https://github.com/pjsip/pjproject/archive/refs/tags/$PJ_VERSION.tar.gz"
 if [[ ! -f "$TARBALL" ]]; then
     mkdir -p "$(dirname "$TARBALL")"
-    curl -sSL -o "$TARBALL" "https://github.com/pjsip/pjproject/archive/refs/tags/$PJ_VERSION.tar.gz"
+    echo "Baixando pjproject $PJ_VERSION..."
+    # baixa num .part: um download interrompido não fica no lugar do arquivo completo
+    if command -v curl >/dev/null; then
+        curl -fSL --retry 3 -o "$TARBALL.part" "$URL"
+    elif command -v wget >/dev/null; then
+        wget -O "$TARBALL.part" "$URL"
+    else
+        echo "Falta o curl ou o wget: rode antes sudo ./scripts/install-deps.sh" >&2
+        exit 1
+    fi
+    mv "$TARBALL.part" "$TARBALL"
 fi
-echo "$PJ_SHA256  $TARBALL" | sha256sum -c -
+if ! echo "$PJ_SHA256  $TARBALL" | sha256sum -c --quiet -; then
+    rm -f "$TARBALL"
+    echo "O arquivo baixado do pjproject está corrompido e foi apagado; rode o script de novo." >&2
+    exit 1
+fi
 
-if [[ ! -d "$SRC" ]]; then
+if [[ ! -f "$SRC/aconfigure" ]]; then
+    rm -rf "$SRC"   # extração anterior incompleta
     tar xzf "$TARBALL" -C "$BASE"
 fi
 

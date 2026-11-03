@@ -266,6 +266,7 @@ LRESULT Dialer::WindowProc(UINT msg, WPARAM wParam, LPARAM)
     if (msg == WM_TIMER) {
         if (wParam == IDT_TIMER_VU_METER) {
             TimerVuMeter();
+            UpdateConfActive(); // MySimpleSIP: roda enquanto houver chamadas
         }
         if (wParam == IDT_TIMER_SHORTCUTS_BLINK) {
             OnTimerShortcutsBlink();
@@ -347,6 +348,7 @@ void Dialer::RebuildButtons(bool init)
         }
         if (addRec) {
             m_ButtonRec = static_cast<QPushButton*>(CreateBottomButton(_T("REC"), _T("Call Recording"), false, false, rect));
+            SetStateButtonColor(m_ButtonRec, QColor(0xc6, 0x28, 0x28)); // vermelho: gravando
             m_ButtonRec->setEnabled(false);
             QObject::connect(m_ButtonRec, &QPushButton::clicked, this, [this] { OnBnClickedRec(); });
             rect.translate(-stepPx, 0);
@@ -357,28 +359,33 @@ void Dialer::RebuildButtons(bool init)
             r.setRight(r.right() - confExtra);
             m_ButtonConf = static_cast<QPushButton*>(CreateBottomButton(_T("CONF"), _T("Conference"), false, false, r));
             m_ButtonConf->setCheckable(false);
+            SetStateButtonColor(m_ButtonConf, QColor(0x15, 0x65, 0xc0)); // azul: conferência em andamento
             m_ButtonConf->setEnabled(false);
             QObject::connect(m_ButtonConf, &QPushButton::clicked, this, [this] { OnBnClickedConf(); });
             rect.translate(-stepPx - confExtra, 0);
         }
         if (addAA) {
             m_ButtonAA = static_cast<QPushButton*>(CreateBottomButton(_T("AA"), _T("Auto Answer"), true, accountSettings.AA, rect));
+            SetStateButtonColor(m_ButtonAA, QColor(0x2e, 0x7d, 0x32)); // verde
             QObject::connect(m_ButtonAA, &QPushButton::clicked, this, [this] { OnBnClickedAA(); });
             rect.translate(-stepPx, 0);
         }
         if (addAC) {
             m_ButtonAC = static_cast<QPushButton*>(CreateBottomButton(_T("AC"), _T("Auto Conference"), true, accountSettings.AC, rect));
+            SetStateButtonColor(m_ButtonAC, QColor(0x2e, 0x7d, 0x32));
             QObject::connect(m_ButtonAC, &QPushButton::clicked, this, [this] { OnBnClickedAC(); });
             rect.translate(-stepPx, 0);
         }
         if (addFWD) {
             m_ButtonFWD = static_cast<QPushButton*>(CreateBottomButton(_T("FWD"), _T("Call Forwarding"), true, accountSettings.FWD, rect));
+            SetStateButtonColor(m_ButtonFWD, QColor(0x15, 0x65, 0xc0));
             QObject::connect(m_ButtonFWD, &QPushButton::clicked, this, [this] { OnBnClickedFWD(); });
             rect.translate(-stepPx, 0);
         }
         if (addDND) {
             // BS_CHECKBOX (não automático): o estado vem de SwitchDND/SetCheckDND
             m_ButtonDND = static_cast<QPushButton*>(CreateBottomButton(_T("DND"), _T("Do Not Disturb"), false, accountSettings.DND, rect));
+            SetStateButtonColor(m_ButtonDND, QColor(0xe6, 0x51, 0x00)); // laranja: chamadas recusadas
             QObject::connect(m_ButtonDND, &QPushButton::clicked, this, [this] {
                 m_ButtonDND->setChecked(!m_ButtonDND->isChecked()); // desfaz a troca automática do Qt
                 OnBnClickedDND();
@@ -1258,4 +1265,32 @@ void Dialer::EnableButtonCONF(bool enabled)
     if (m_ButtonConf) {
         m_ButtonConf->setEnabled(enabled);
     }
+}
+
+// MySimpleSIP: o CONF não alterna (abre o menu de conferência); fica destacado enquanto
+// houver uma conferência em andamento (duas ou mais chamadas atendidas juntas)
+void Dialer::UpdateConfActive()
+{
+    if (!m_ButtonConf) {
+        return;
+    }
+    int count = 0;
+    if (is_pjsua_running() && pjsua_call_get_count()) {
+        pjsua_call_id call_ids[PJSUA_MAX_CALLS];
+        unsigned calls_count = PJSUA_MAX_CALLS;
+        if (pjsua_enum_calls(call_ids, &calls_count) == PJ_SUCCESS) {
+            for (unsigned i = 0; i < calls_count; i++) {
+                pjsua_call_info call_info;
+                if (pjsua_call_get_info(call_ids[i], &call_info) != PJ_SUCCESS
+                    || call_info.state != PJSIP_INV_STATE_CONFIRMED) {
+                    continue;
+                }
+                call_user_data* user_data = (call_user_data*)pjsua_call_get_user_data(call_ids[i]);
+                if (user_data && user_data->inConference) {
+                    count++;
+                }
+            }
+        }
+    }
+    SetStateButtonActive(m_ButtonConf, count >= 2);
 }

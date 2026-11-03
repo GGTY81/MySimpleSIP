@@ -23,6 +23,7 @@
   <icon type="stock">mysimplesip</icon>
   <url type="homepage">https://github.com/GGTY81/MySimpleSIP</url>
   <url type="bugtracker">https://github.com/GGTY81/MySimpleSIP/issues</url>
+  <url type="help">https://github.com/GGTY81/MySimpleSIP/blob/main/docs/MANUAL.md</url>
   <developer id="io.github.ggty81">
     <name>Giovanni Grimaldi Torelly</name>
   </developer>
