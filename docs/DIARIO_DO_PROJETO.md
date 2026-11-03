@@ -393,6 +393,7 @@
 - **Investigação:** o Enter já chegava ao `OnBnClickedOk` pelo `returnPressed` do campo e pelo `Dialer::keyPressEvent` (teclas e botões do discador), e o teste offscreen discava nesses casos, também no Modo Chamada Única e com histórico. O caso que falhava era o foco fora do discador (barra de abas, por exemplo): no Windows o IDOK do diálogo recebe o Enter de qualquer controle; no Qt cada widget trata a tecla e ela não chegava ao discador. Sem ferramenta de envio de teclas no Wayland, o fluxo exato da sessão do GNOME não foi reproduzido.
 - **Correção:** `CmainDlg::PreTranslateKey` (filtro do aplicativo, equivalente ao `PreTranslateMessage`) trata Enter/Enter do teclado numérico na aba Telefone, com qualquer controle da janela principal em foco (exceto o botão de menu), chamando `Dialer::OnBnClickedOk` e consumindo a tecla (o campo não dispara o `returnPressed` de novo); repetição automática ignorada. No Modo Chamada Única, com chamada em curso, o Enter desliga, como no original.
 - **Teste:** `Dialer.EnterDisca` (foco no campo, numa tecla do discador e na barra de abas; Enter normal e do teclado numérico; uma chamada por Enter; campo vazio não disca). Sem a correção, o caso da barra de abas falha. 116 testes no build normal e no ASan/UBSan.
+- **Publicação e confirmação:** Release `v1.0.1` com o `.deb` publicada; o responsável instalou e confirmou que o Enter disca no uso real.
 
 ---
 
