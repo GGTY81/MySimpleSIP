@@ -7,7 +7,7 @@
 
 | Campo | Valor |
 |---|---|
-| Versão vigente | **1.0.0** (ver arquivo `VERSION`) |
+| Versão vigente | **1.0.1** (ver arquivo `VERSION`) |
 | Fase | Fases 0 a 10 concluídas: 1.0.0 publicada (tag `v1.0.0` e Release com o `.deb`) |
 | Base de referência | MicroSIP 3.22.16 (fonte em `reference/MicroSIP-3.22.16/`) + sons/langpacks do binário 3.22.12 (`reference/MicroSIP-3.22.12-assets/`), ambos somente leitura. MicroSIP 3.22.12 instalado no Bottles serve de comparação visual/funcional |
 | Pilha decidida | C++20 · CMake/Ninja · Qt 6 Widgets · pjproject 2.15.1 (mesma versão do binário do MicroSIP; tarball em `third_party/`) · SQLite/SQLiteCpp · QtKeychain · hidapi |
@@ -45,6 +45,7 @@
 | 0.2.1 | 2026-10-30 | Fase 3, parte 1: senhas no chaveiro do sistema (`KeychainPasswordStore`, QtKeychain/Secret Service); janela principal Qt `CmainDlg` (deriva de `CmainDlgCore`): abas, botão de menu, barra de status com ícone, `UpdateWindowText`, bandeja, menu principal, posição/tamanho salvos; `main.cpp` passa a abrir a janela real. |
 | 0.2.2 | 2026-10-30 | Fase 3, parte 2: `CDialogLayout` (monta qualquer `IDD_*` a partir de `dialogs.json`, controles acessados pelo ID do `.rc`); `AccountDlg` portado (nova/editar/excluir conta, conta local, senha no chaveiro); teste de interface offscreen `test_ui`. |
 | 0.2.3 | 2026-10-30 | Fase 3, parte 3: `Dialer` (aba Telefone) portado — teclado, número com histórico, Chamar/Encerrar, volumes/mudo, VU-meter, DTMF, DND/AA/FWD/AC/CONF/REC; controles `CButtonDialer/CButtonEx/CLevelsSliderCtrl`; `CDialogLayout` com controles próprios e `AutoMove/AutoUnmove`; chamadas pela janela com provisórios (`MakeCall/PerformCall`, toque e caixa Atender/Rejeitar). |
+| 1.0.1 | 2026-11-03 | Enter na aba Telefone disca com o foco em qualquer controle da janela principal (campo, teclas, volumes, abas), tratado pela janela como o IDOK do diálogo no Windows, uma única vez; 116 testes. |
 | **1.0.0** | 2026-11-03 | **Fim da Fase 10 (Paridade) — versão estável.** Botões de estado do discador (DND, AA, AC, FWD, CONF, REC) com fundo colorido quando ligados (o CONF fica azul durante a conferência); manual completo do usuário (`docs/MANUAL.md`) e links "?" dos diálogos Conta, Configurações e Atalhos abrindo o manual na seção do campo; diálogo **Sobre** com a versão e os créditos (autor do port, MicroSIP original, bibliotecas, licença); `build.sh`/`build-deb.sh` não terminam mais calados numa pasta recém-clonada (o `ls \| head` com `pipefail`), download do pjproject à prova de interrupção e `curl`/`patch` nas dependências; sem telemetria; 115 testes. |
 | 0.9.1 | 2026-11-03 | Fase 10, parte 1: **auditoria de paridade** — "Visitar site" (Ctrl+W) e "Ajuda" abrindo o repositório e o guia do usuário; verificação de atualizações pela última Release do GitHub (`CheckUpdates`/`OnUpdateCheckerLoaded`, comparação numérica de versões, só a página do projeto); clique no balão de site; `WM_WTSSESSION_CHANGE` pela propriedade `Active` da sessão no logind (refaz os dispositivos); 114 testes. |
 | **0.9.0** | 2026-11-01 | **Fim da Fase 9 (Polimento e empacotamento).** Pacote `.deb` pelo CPack (`scripts/build-deb.sh`, `cmake/Packaging.cmake`: executável, verificador do fone HID em `/usr/libexec`, sons e langpacks, `.desktop`, ícones hicolor, metainfo do AppStream validado, regra do udev aplicada pelo `postinst`; dependências pelo `dpkg-shlibdeps`, todas no main/universe do 26.04); ícone próprio do aplicativo e da bandeja (`resources/brand/`, no lugar do logotipo do MicroSIP); caminho dos sons pelo prefixo de instalação; 112 testes. |
@@ -385,6 +386,13 @@
 - **Telemetria:** confirmado que não há nenhuma (o `Statistics` e o relatório de falhas nunca foram portados; `crashReport` fica 0). A única conexão fora do SIP é a verificação de versão nas Releases.
 - **Testes:** `HelpAbout.LinksSobreEBotoes` (links visíveis e com âncora existente no manual, Sobre com os créditos e instância única, cores dos botões ligados/desligados, CONF); dois testes antigos que esperavam os "?" ocultos ajustados. 115 testes no build normal e no ASan/UBSan.
 - **Documentação:** README (1.0.0, instalação pelo `.deb`, manual), INSTALACAO (pacote das Releases primeiro, atualização, problema do download), manual linkado na Ajuda.
+
+
+### 2026-11-03 — Sessão 38: Enter no discador (1.0.1)
+- **Relato do responsável** (`.deb` 1.0.0 instalado, Modo Chamada Única): digitar os números pelo teclado funciona, mas o Enter não disca.
+- **Investigação:** o Enter já chegava ao `OnBnClickedOk` pelo `returnPressed` do campo e pelo `Dialer::keyPressEvent` (teclas e botões do discador), e o teste offscreen discava nesses casos, também no Modo Chamada Única e com histórico. O caso que falhava era o foco fora do discador (barra de abas, por exemplo): no Windows o IDOK do diálogo recebe o Enter de qualquer controle; no Qt cada widget trata a tecla e ela não chegava ao discador. Sem ferramenta de envio de teclas no Wayland, o fluxo exato da sessão do GNOME não foi reproduzido.
+- **Correção:** `CmainDlg::PreTranslateKey` (filtro do aplicativo, equivalente ao `PreTranslateMessage`) trata Enter/Enter do teclado numérico na aba Telefone, com qualquer controle da janela principal em foco (exceto o botão de menu), chamando `Dialer::OnBnClickedOk` e consumindo a tecla (o campo não dispara o `returnPressed` de novo); repetição automática ignorada. No Modo Chamada Única, com chamada em curso, o Enter desliga, como no original.
+- **Teste:** `Dialer.EnterDisca` (foco no campo, numa tecla do discador e na barra de abas; Enter normal e do teclado numérico; uma chamada por Enter; campo vazio não disca). Sem a correção, o caso da barra de abas falha. 116 testes no build normal e no ASan/UBSan.
 
 ---
 

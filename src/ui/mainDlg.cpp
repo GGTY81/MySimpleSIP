@@ -2090,6 +2090,17 @@ bool CmainDlg::PreTranslateKey(QWidget* window, QKeyEvent* event)
         }
     }
     else {
+        // MySimpleSIP: Enter na aba Telefone disca (IDOK → Dialer::OnBnClickedOk) qualquer que
+        // seja o controle com foco na janela (campo, teclas, volumes, abas). No Windows o IDOK
+        // do diálogo recebe o Enter de qualquer controle; no Qt cada widget trata a tecla e,
+        // na sessão do GNOME, o Enter podia não chegar ao discador.
+        if ((key == Qt::Key_Return || key == Qt::Key_Enter) && !altState && !shiftState && window == this
+            && m_pages->currentWidget() == pageDialer && focusWidget() != m_ButtonMenu) {
+            if (!event->isAutoRepeat()) {
+                pageDialer->OnBnClickedOk();
+            }
+            return true;
+        }
         if (key == Qt::Key_F2) {
             //answer a call
             msip_call_answer();

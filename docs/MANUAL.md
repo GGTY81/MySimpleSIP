@@ -564,7 +564,7 @@ AppIndicators* (já ativa por padrão).
 
 | Tecla | Ação |
 |---|---|
-| **Enter** | Chamar o número digitado |
+| **Enter** | Chamar o número digitado (na aba Telefone, com o foco em qualquer lugar da janela; em Modo Chamada Única, durante a chamada, desliga) |
 | **F2** | Atender |
 | **F4** | Desligar todas as chamadas |
 | **Ctrl+Tab** / **Ctrl+Shift+Tab** | Próxima / anterior aba |
