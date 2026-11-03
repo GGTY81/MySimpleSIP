@@ -47,6 +47,11 @@ using TIMERPROC = void (*)(HWND, UINT, UINT_PTR, DWORD);
 #   define PBT_APMSUSPEND 0x0004
 #   define PBT_APMRESUMEAUTOMATIC 0x0012
 #endif
+// WM_WTSSESSION_CHANGE (sessão do usuário reconectada)
+#ifndef WTS_CONSOLE_CONNECT
+#   define WTS_CONSOLE_CONNECT 0x1
+#   define WTS_REMOTE_CONNECT 0x3
+#endif
 // Gancho de shell (teclas de mídia): HSHELL_APPCOMMAND com o comando na palavra alta
 #ifndef HSHELL_APPCOMMAND
 #   define HSHELL_APPCOMMAND 12

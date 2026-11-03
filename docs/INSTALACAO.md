@@ -204,6 +204,11 @@ git pull
 Se uma atualização trouxer dependências novas, rode também `sudo ./scripts/install-deps.sh`.
 Configurações, contatos e histórico ficam na sua pasta pessoal e são mantidos.
 
+O aviso de versão nova vem do próprio aplicativo: conforme **Verificar por atualizações**
+nas Configurações (semanalmente, por padrão; "Nunca" desliga), ele consulta a última versão
+publicada na página de [Releases](https://github.com/GGTY81/MySimpleSIP/releases) e, se houver
+uma mais nova, oferece abrir a página. Nenhum dado seu é enviado nessa consulta.
+
 ## Remover
 
 ```bash

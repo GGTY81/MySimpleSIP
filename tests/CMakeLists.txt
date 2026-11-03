@@ -74,6 +74,7 @@ qt_add_executable(test_ui
     ui/test_headset.cpp
     ui/test_video.cpp
     ui/test_brand.cpp
+    ui/test_parity.cpp
     "${PROJECT_SOURCE_DIR}/resources/resources.qrc"
     "${PROJECT_SOURCE_DIR}/resources/layout.qrc"
     "${PROJECT_SOURCE_DIR}/resources/brand.qrc"

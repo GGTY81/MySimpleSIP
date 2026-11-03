@@ -128,8 +128,9 @@ void AccountSettings::Init()
             return;
         }
         // MySimpleSIP: no primeiro uso o MicroSIP lia RunAtSystemStartup do registro
-        // (gravado pelo instalador) e chamava msip_startup_set(). No Linux, o início
-        // automático será tratado em platform/linux/Autostart (Fase 7).
+        // (gravado pelo instalador) e chamava msip_startup_set(). O pacote do Linux não
+        // pergunta isso na instalação: o início automático fica só pela opção das
+        // Configurações (XDG Autostart, msip_startup_set).
     }
     //--
 

@@ -12,6 +12,7 @@
 
 #include <QDBusConnection>
 #include <QDBusMessage>
+#include <QDBusObjectPath>
 #include <QDBusReply>
 #include <QSocketNotifier>
 
@@ -99,6 +100,22 @@ PowerMonitor::PowerMonitor(QObject* parent) : QObject(parent)
                               QStringLiteral("PrepareForSleep"), this, SLOT(onPrepareForSleep(bool)));
     if (m_connected) {
         takeSleepDelay();
+    }
+    // WM_WTSSESSION_CHANGE (WTS_CONSOLE_CONNECT): a sessão deste processo volta a ser a ativa
+    // (troca de usuário, retorno ao terminal) — propriedade Active da sessão no logind
+    QDBusReply<QDBusObjectPath> session = Logind(QStringLiteral("GetSessionByPID"), {(uint) ::getpid()});
+    if (session.isValid()) {
+        m_sessionPath = session.value().path();
+        bus.connect(QLatin1String(kLogindService), m_sessionPath, QStringLiteral("org.freedesktop.DBus.Properties"),
+                    QStringLiteral("PropertiesChanged"), this, SLOT(onSessionPropertiesChanged(QString, QVariantMap, QStringList)));
+    }
+}
+
+void PowerMonitor::onSessionPropertiesChanged(const QString& iface, const QVariantMap& changed, const QStringList&)
+{
+    if (iface == QLatin1String("org.freedesktop.login1.Session") && changed.contains(QStringLiteral("Active")) &&
+        changed.value(QStringLiteral("Active")).toBool()) {
+        emit sessionActivated();
     }
 }
 

@@ -15,6 +15,7 @@
 //                    dar tempo de encerrar o pjsua antes de suspender) e
 //                    SetThreadExecutionState durante chamadas (inibe ociosidade/suspensão
 //                    pelo gnome-session, ou pelo logind sem GNOME);
+//                    e WM_WTSSESSION_CHANGE (sessão reativada: propriedade Active do logind);
 //   SessionIdleTimeMs — GetLastInputInfo (org.gnome.Mutter.IdleMonitor).
 
 #pragma once
@@ -53,9 +54,11 @@ public:
 signals:
     void aboutToSleep(); // PBT_APMSUSPEND: a trava "delay" é liberada logo depois
     void resumed();      // PBT_APMRESUMEAUTOMATIC
+    void sessionActivated(); // WM_WTSSESSION_CHANGE (WTS_CONSOLE_CONNECT)
 
 public slots:
     void onPrepareForSleep(bool start);
+    void onSessionPropertiesChanged(const QString& iface, const QVariantMap& changed, const QStringList& invalidated);
 
 private:
     void takeSleepDelay();
@@ -63,6 +66,7 @@ private:
     QDBusUnixFileDescriptor m_sleepDelay;
     QDBusUnixFileDescriptor m_callLock; // logind, sem gnome-session
     uint m_gnomeCookie = 0;
+    QString m_sessionPath;
 };
 
 // Tempo sem entrada do usuário na sessão, em ms; -1 se não houver como saber.

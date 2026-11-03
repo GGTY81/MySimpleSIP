@@ -31,6 +31,8 @@
 #include "VideoWindow.h"
 
 #include <json/json.h>
+#include <sstream>
+#include <vector>
 #include "CoreHost.h"
 #include "Dialer.h"
 #include "MessagesDlg.h"
@@ -245,6 +247,8 @@ void CmainDlg::OnInitDialog()
     m_powerMonitor = new PowerMonitor(this);
     QObject::connect(m_powerMonitor, &PowerMonitor::aboutToSleep, this, [this] { OnPowerBroadcast(PBT_APMSUSPEND, 0); });
     QObject::connect(m_powerMonitor, &PowerMonitor::resumed, this, [this] { OnPowerBroadcast(PBT_APMRESUMEAUTOMATIC, 0); });
+    // ON_WM_WTSSESSION_CHANGE (WTSRegisterSessionNotification)
+    QObject::connect(m_powerMonitor, &PowerMonitor::sessionActivated, this, [this] { OnSessionChange(WTS_CONSOLE_CONNECT, 0); });
     // RegisterShellHookWindow (teclas de mídia) → player MPRIS; como no PreTranslateMessage,
     // os comandos só valem com enableMediaButtons
     m_mediaKeys = new MediaKeys(this);
@@ -350,7 +354,15 @@ void CmainDlg::ShowTrayIcon()
         if (r == QSystemTrayIcon::Trigger || r == QSystemTrayIcon::DoubleClick)
             onTrayNotify(1, 0); // WM_LBUTTONUP vindo da bandeja
     });
-    QObject::connect(m_tray, &QSystemTrayIcon::messageClicked, this, [this] { onTrayNotify(0, 0); });
+    // NIN_BALLOONUSERCLICK
+    QObject::connect(m_tray, &QSystemTrayIcon::messageClicked, this, [this] {
+        if (tndId == MSIP_BALOON_WEBSITE) {
+            OnMenuWebsite();
+        }
+        else {
+            onTrayNotify(0, 0);
+        }
+    });
     // o menu da bandeja é reconstruído a cada abertura, como o MainPopupMenu original
     auto* trayMenu = new QMenu(this);
     QObject::connect(trayMenu, &QMenu::aboutToShow, this, [this, trayMenu] {
@@ -427,9 +439,10 @@ void CmainDlg::TrayIconUpdateTip()
     }
 }
 
-void CmainDlg::BaloonPopup(CString title, CString message, DWORD flags, UINT /*id*/)
+void CmainDlg::BaloonPopup(CString title, CString message, DWORD flags, UINT id)
 {
     // MySimpleSIP: balão do Shell_NotifyIcon → notificação da bandeja
+    tndId = id; // NIN_BALLOONUSERCLICK decide pelo último balão
     if (m_tray) {
         QSystemTrayIcon::MessageIcon icon = flags == NIIF_INFO ? QSystemTrayIcon::Information
             : flags == NIIF_ERROR                             ? QSystemTrayIcon::Critical
@@ -671,13 +684,10 @@ QMenu* CmainDlg::BuildMainMenu()
         menu->addAction(TR(_T("View Log File")), this, [this] { OnMenuLog(); });
     }
 
-    // MySimpleSIP: "Visit Website" e "Help" dependem dos links do projeto (decisão pendente)
     menu->addSeparator();
-    QAction* website = menu->addAction(TR(_T("Visit Website")) + QStringLiteral("\tCtrl+W"));
-    website->setEnabled(false);
+    menu->addAction(TR(_T("Visit Website")) + QStringLiteral("\tCtrl+W"), this, [this] { OnMenuWebsite(); });
     menu->addSeparator();
-    QAction* help = menu->addAction(TR(_T("Help")) + QStringLiteral("\tv") + QStringLiteral(_GLOBAL_VERSION));
-    help->setEnabled(false);
+    menu->addAction(TR(_T("Help")) + QStringLiteral("\tv") + QStringLiteral(_GLOBAL_VERSION), this, [this] { OnMenuHelp(); });
 
     menu->addSeparator();
     menu->addAction(TR(_T("Exit")) + QStringLiteral("\tCtrl+Q"), this, [this] { OnMenuExit(); });
@@ -2072,8 +2082,9 @@ bool CmainDlg::PreTranslateKey(QWidget* window, QKeyEvent* event)
         if (key == Qt::Key_O) {
             postCommand = [this] { OnMuteOutput(); };
         }
-        // MySimpleSIP: Ctrl+W (ID_MENU_WEBSITE) fica de fora enquanto "Visit Website" não tem
-        // endereço (item desabilitado no menu)
+        if (key == Qt::Key_W) {
+            postCommand = [this] { OnMenuWebsite(); };
+        }
     }
     else {
         if (key == Qt::Key_F2) {
@@ -2129,6 +2140,120 @@ LRESULT CmainDlg::onMWIInfo(WPARAM wParam, LPARAM /*lParam*/)
 {
     bool hasMail = (bool)wParam;
     pageDialer->UpdateVoicemailButton(hasMail);
+    return 0;
+}
+
+void CmainDlg::OnMenuWebsite()
+{
+    CString url = _T(_GLOBAL_MENU_WEBSITE);
+    MSIP::OpenURL(url);
+}
+
+void CmainDlg::OnMenuHelp()
+{
+    // MySimpleSIP: OpenHelp() abre a ajuda do site do MicroSIP; aqui, o guia do usuário
+    MSIP::OpenURL(_T(_GLOBAL_MENU_HELP));
+}
+
+void CmainDlg::OnSessionChange(UINT nSessionState, UINT /*nId*/)
+{
+    if (nSessionState == WTS_REMOTE_CONNECT || nSessionState == WTS_CONSOLE_CONNECT) {
+        KillTimer(IDT_TIMER_SWITCH_DEVICES);
+        if (is_pjsua_running()) {
+            PJ_LOG(3, (THIS_FILENAME, "WM_WTSSESSION_CHANGE"));
+            SetTimer(IDT_TIMER_SWITCH_DEVICES, 1500, NULL);
+        }
+    }
+}
+
+// MySimpleSIP: o servidor do MicroSIP responde em texto (URL, versão, novidades); aqui a
+// resposta é a última Release do repositório (API do GitHub, JSON: tag_name, html_url, body)
+void CmainDlg::OnCheckUpdates()
+{
+    updateCheckerShow = true;
+    CheckUpdates();
+}
+
+void CmainDlg::CheckUpdates()
+{
+    CString url = _T(_GLOBAL_URL_CHECK_VERSION);
+    // a API do GitHub exige User-Agent
+    CString headers;
+    headers.Format(_T("User-Agent: %s/%s\r\nAccept: application/vnd.github+json\r\n"), _T(_GLOBAL_NAME_VISIBLE), _T(_GLOBAL_VERSION));
+    URLGetAsync(url, m_hWnd, UM_UPDATE_CHECKER_LOADED, 0, _T(""), headers);
+}
+
+// "1.2.3" (ou "v1.2.3") é mais nova que a nossa? Como o original, completa até 4 partes.
+bool IsNewerVersion(const CString& version, const CString& our)
+{
+    auto parts = [](CString v) {
+        v.Trim();
+        if (!v.IsEmpty() && (v[0] == 'v' || v[0] == 'V')) {
+            v = v.Mid(1);
+        }
+        std::vector<int> out;
+        int pos = 0;
+        CString token = v.Tokenize(_T("."), pos);
+        while (!token.IsEmpty() && out.size() < 4) {
+            for (int i = 0; i < token.GetLength(); i++) {
+                if (token[i] < '0' || token[i] > '9') {
+                    return std::vector<int>();
+                }
+            }
+            out.push_back(_wtoi(token));
+            token = v.Tokenize(_T("."), pos);
+        }
+        out.resize(4, 0);
+        return out;
+    };
+    const std::vector<int> a = parts(version);
+    const std::vector<int> b = parts(our);
+    if (a.empty() || b.empty()) {
+        return false;
+    }
+    return a > b;
+}
+
+LRESULT CmainDlg::OnUpdateCheckerLoaded(WPARAM wParam, LPARAM /*lParam*/)
+{
+    bool found = false;
+    URLGetAsyncData* response = (URLGetAsyncData*)wParam;
+    if (response->statusCode == 200 && !response->body.IsEmpty()) {
+        Json::Value root;
+        Json::CharReaderBuilder builder;
+        std::string errs;
+        std::istringstream in(std::string(response->body.GetString(), response->body.GetLength()));
+        if (Json::parseFromStream(builder, in, &root, &errs) && root.isObject()) {
+            CString version = MSIP::Utf8DecodeUni(CStringA(root.get("tag_name", "").asString().c_str()));
+            CString url = MSIP::Utf8DecodeUni(CStringA(root.get("html_url", "").asString().c_str()));
+            CString info = MSIP::Utf8DecodeUni(CStringA(root.get("body", "").asString().c_str()));
+            info.Trim();
+            if (info.GetLength() > 600) {
+                info = info.Left(600) + _T("…");
+            }
+            // como o original só aceitava https em *.microsip.org: só a página do projeto
+            bool allowed = url.Find(_T(_GLOBAL_MENU_WEBSITE "/")) == 0;
+            if (allowed && IsNewerVersion(version, _T(_GLOBAL_VERSION))) {
+                CString caption;
+                caption.Format(_T("%s %s"), _T(_GLOBAL_NAME_VISIBLE), Translate(_T("Update Available")));
+                CString message = Translate(_T("Do you want to update now?"));
+                if (!info.IsEmpty()) {
+                    message.AppendFormat(_T("\r\n\r\n%s"), info);
+                }
+                found = true;
+                lastUpdateFound = version;
+                if (!updateCheckerSilent && QMessageBox::question(this, QS(caption), QS(message)) == QMessageBox::Yes) {
+                    MSIP::OpenURL(url);
+                }
+            }
+        }
+    }
+    delete response;
+    if (updateCheckerShow && !found && !updateCheckerSilent) {
+        QMessageBox::information(this, QString(), TR(_T("No new version found")));
+    }
+    updateCheckerShow = false;
+    updateCheckerDone = true;
     return 0;
 }
 
@@ -3557,6 +3682,8 @@ LRESULT CmainDlg::WindowProc(UINT msg, WPARAM wParam, LPARAM lParam)
         return OnNetworkChange(wParam, lParam);
     case UM_RECREATE:
         return OnRecreate(wParam, lParam);
+    case UM_UPDATE_CHECKER_LOADED:
+        return OnUpdateCheckerLoaded(wParam, lParam);
     case WM_DEVICECHANGE:
         return OnDeviceChange(wParam, lParam);
     case UM_ON_COMMAND_LINE:

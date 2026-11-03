@@ -53,6 +53,9 @@ class QSystemTrayIcon;
 class QTabBar;
 class QToolButton;
 
+// MySimpleSIP: comparação de versões do verificador de atualizações
+bool IsNewerVersion(const CString& version, const CString& our);
+
 class CmainDlg : public QWidget, public CmainDlgCore, public IMessageTarget {
 public:
     explicit CmainDlg(QtMessageBackend* backend, bool startMinimized);
@@ -114,6 +117,19 @@ public:
     LRESULT onShellHookMessage(WPARAM wParam, LPARAM lParam);
     // vídeo
     void createPreviewWin() override;
+    // site, ajuda e atualizações (repositório do projeto)
+    void OnMenuWebsite();
+    void OnMenuHelp();
+    void OnCheckUpdates();
+    void CheckUpdates() override;
+    LRESULT OnUpdateCheckerLoaded(WPARAM wParam, LPARAM lParam);
+    bool updateCheckerShow = false;
+    bool updateCheckerSilent = false; // MySimpleSIP: testes (sem caixas de diálogo)
+    bool updateCheckerDone = false;
+    CString lastUpdateFound;
+    UINT tndId = MSIP_BALOON_DEFAULT; // último balão (NIN_BALLOONUSERCLICK)
+    // WM_WTSSESSION_CHANGE (sessão reativada → refaz os dispositivos)
+    void OnSessionChange(UINT nSessionState, UINT nId);
     void InstallVideoRenderer() override;
     LRESULT onRefreshLevels(WPARAM wParam, LPARAM lParam);
     LRESULT onCallState(WPARAM wParam, LPARAM lParam);

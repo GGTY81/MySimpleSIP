@@ -66,14 +66,15 @@
 #define _GLOBAL_SETT_DENYINC_DEFAULT "button"
 #define _GLOBAL_SETT_AA_DEFAULT "button"
 
-// MySimpleSIP: não usar os endpoints do microsip.org (decisão pendente sobre site,
-// ajuda e servidor de atualização — ver docs/DIARIO_DO_PROJETO.md). Vazio = desativado.
-#define _GLOBAL_MENU_WEBSITE ""
-#define _GLOBAL_MENU_DOWNLOADS ""
-#define _GLOBAL_MENU_ISSUES ""
-#define _GLOBAL_MENU_HELP ""
+// MySimpleSIP: nada do microsip.org; site, ajuda e atualizações ficam no repositório público
+// do projeto (as atualizações pela API de Releases do GitHub). _GLOBAL_HELP_WEBSITE fica vazio:
+// os links "?" dos diálogos apontam para âncoras da ajuda do MicroSIP, que não existem aqui.
+#define _GLOBAL_MENU_WEBSITE "https://github.com/GGTY81/MySimpleSIP"
+#define _GLOBAL_MENU_DOWNLOADS "https://github.com/GGTY81/MySimpleSIP/releases"
+#define _GLOBAL_MENU_ISSUES "https://github.com/GGTY81/MySimpleSIP/issues"
+#define _GLOBAL_MENU_HELP "https://github.com/GGTY81/MySimpleSIP/blob/main/docs/INSTALACAO.md"
 #define _GLOBAL_HELP_WEBSITE ""
-#define _GLOBAL_URL_CHECK_VERSION ""
+#define _GLOBAL_URL_CHECK_VERSION "https://api.github.com/repos/GGTY81/MySimpleSIP/releases/latest"
 #define _GLOBAL_TECH_DETAILS
 
 #define _GLOBAL_EC_DEFAULT "1"
